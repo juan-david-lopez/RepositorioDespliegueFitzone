@@ -1,0 +1,19 @@
+@"
+# Development files with secrets
+application-dev.properties
+src/main/resources/application-dev.properties
+*.env
+.env.*
+
+# IDE
+.DS_Store
+.vscode/
+.idea/
+
+# Logs
+logs/
+*.log
+
+# OS
+Thumbs.db
+"@ | Out-File -FilePath .gitignore -Encoding UTF8

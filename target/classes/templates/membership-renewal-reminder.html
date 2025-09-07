@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recordatorio de Renovación - FitZone</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            background-color: #4a90e2;
+            color: white;
+            padding: 30px 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .header p {
+            margin: 8px 0 0 0;
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .greeting {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .reminder-message {
+            background-color: #f8f9fa;
+            border-left: 4px solid #4a90e2;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .reminder-message h2 {
+            margin: 0 0 15px 0;
+            color: #4a90e2;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .reminder-message p {
+            margin: 0;
+            font-size: 16px;
+            color: #2c3e50;
+        }
+
+        .membership-details {
+            background-color: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f3f4;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #666;
+        }
+
+        .detail-value {
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        .expiry-date {
+            color: #dc3545;
+            font-weight: 600;
+        }
+
+        .cta-section {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background-color: #4a90e2;
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        .cta-button:hover {
+            background-color: #357abd;
+        }
+
+        .benefits-section {
+            margin: 30px 0;
+        }
+
+        .benefits-title {
+            color: #4a90e2;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .benefits-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .benefits-list li {
+            padding: 8px 0;
+            color: #666;
+            position: relative;
+            padding-left: 25px;
+        }
+
+        .benefits-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #4a90e2;
+            font-weight: bold;
+        }
+
+        .contact-info {
+            background-color: #f8f9fa;
+            padding: 25px;
+            border-radius: 8px;
+            margin: 25px 0;
+            text-align: center;
+        }
+
+        .contact-info h3 {
+            margin: 0 0 15px 0;
+            color: #2c3e50;
+            font-size: 16px;
+        }
+
+        .contact-info p {
+            margin: 5px 0;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .footer {
+            background-color: #2c3e50;
+            color: white;
+            padding: 25px 40px;
+            text-align: center;
+        }
+
+        .footer p {
+            margin: 5px 0;
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .social-links {
+            margin: 15px 0;
+        }
+
+        .social-links a {
+            color: white;
+            text-decoration: none;
+            margin: 0 10px;
+            opacity: 0.8;
+        }
+
+        .social-links a:hover {
+            opacity: 1;
+        }
+
+        @media (max-width: 600px) {
+            .email-container {
+                margin: 0;
+                box-shadow: none;
+            }
+
+            .header, .content, .footer {
+                padding: 20px;
+            }
+
+            .membership-details {
+                padding: 20px;
+            }
+
+            .detail-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="email-container">
+    Header
+    <div class="header">
+        <h1>FitZone</h1>
+        <p>Tu gimnasio de confianza</p>
+    </div>
+
+    Content
+    <div class="content">
+        <div class="greeting">
+            ¡Hola <span th:text="${userName}">Usuario</span>!
+        </div>
+
+        <div class="reminder-message">
+            <h2>⏰ Recordatorio de Renovación</h2>
+            <p>Este es un recordatorio: tu membresía en FitZone está pronto a finalizar. No queremos que pierdas el acceso a todas las instalaciones y beneficios que tanto disfrutas.</p>
+        </div>
+
+        <div class="membership-details">
+            <div class="detail-row">
+                <span class="detail-label">Tipo de Membresía:</span>
+                <span class="detail-value" th:text="${membershipType}">Premium</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Fecha de Vencimiento:</span>
+                <span class="detail-value expiry-date" th:text="${expiryDate}">15 de Enero, 2024</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Días Restantes:</span>
+                <span class="detail-value" th:text="${daysRemaining}">7 días</span>
+            </div>
+        </div>
+
+        <div class="cta-section">
+            <a href="#" class="cta-button" th:href="${renewalLink}">Renovar Membresía Ahora</a>
+        </div>
+
+        <div class="contact-info">
+            <h3>¿Necesitas ayuda?</h3>
+            <p>Teléfono: <span th:text="${gymPhone}">+1 (555) 123-4567</span></p>
+            <p>Email: <span th:text="${gymEmail}">info@fitzone.com</span></p>
+        </div>
+
+        <p style="color: #666; font-size: 14px; text-align: center; margin-top: 30px;">
+            Si ya renovaste tu membresía, puedes ignorar este mensaje.
+            Si tienes alguna pregunta, no dudes en contactarnos.
+        </p>
+    </div>
+
+    Footer
+    <div class="footer">
+        <p>&copy; 2024 FitZone. Todos los derechos reservados.</p>
+        <p>Este es un correo automático, por favor no respondas a este mensaje.</p>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>OTP FitZone</title>
+    <style>
+        .otp-code {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2E86C1;
+            background-color: #f1f1f1;
+            padding: 10px 20px;
+            display: inline-block;
+            border-radius: 5px;
+            user-select: all; /* Permite copiar fácilmente */
+        }
+    </style>
+</head>
+<body>
+<p>Hola <span th:text="${userName}">Usuario</span>,</p>
+<p>Copia y pega este código en la aplicación para completar tu inicio de sesión:</p>
+<p class="otp-code" th:text="${otp}">123456</p>
+<p>Válido por 5 minutos.</p>
+</body>
+</html>
