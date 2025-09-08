@@ -1,0 +1,34 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# Development files
+.env*
+application-dev.properties
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build artifacts (will be built inside container)
+target/
+build/
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+*.tmp
+*.patch

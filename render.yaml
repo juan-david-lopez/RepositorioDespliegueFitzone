@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: fitzone-backend
+    env: docker
+    docker:
+      dockerfile: Dockerfile
+    envVars:
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: fitzone-db
+          property: connectionString
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: fitzone-db
+          property: user
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: fitzone-db
+          property: password
+      - key: SERVER_PORT
+        value: "10000"
+      - key: SPRING_PROFILES_ACTIVE
+        value: "prod"
+    port: 10000
+    healthCheckPath: /actuator/health
+
+databases:
+  - name: fitzone-db
+    databaseName: fitzone
+    user: fitzone_user
+    plan: free
