@@ -3,6 +3,7 @@ package co.edu.uniquindio.FitZone.service.impl;
 import co.edu.uniquindio.FitZone.dto.request.CreateMembershipRequest;
 import co.edu.uniquindio.FitZone.dto.request.SuspendMembershipRequest;
 import co.edu.uniquindio.FitZone.dto.response.MembershipResponse;
+import co.edu.uniquindio.FitZone.dto.response.MembershipStatusResponse;
 import co.edu.uniquindio.FitZone.exception.LocationNotFoundException;
 import co.edu.uniquindio.FitZone.exception.MembershipTypeNotFoundException;
 import co.edu.uniquindio.FitZone.exception.ResourceAlreadyExistsException;
@@ -301,7 +302,6 @@ public class MembershipServiceImpl implements IMembershipService {
                 updatedMembership.getStatus()
         );
     }
-
     @Override
     public void cancelMembership(Long userId) {
         logger.info("Iniciando cancelación de membresía para usuario ID: {}", userId);
@@ -327,5 +327,75 @@ public class MembershipServiceImpl implements IMembershipService {
         
         logger.info("Membresía cancelada exitosamente - ID: {}, Usuario: {}", 
             membership.getIdMembership(), user.getPersonalInformation().getFirstName());
+    }
+
+    @Override
+    public MembershipStatusResponse checkMembershipStatus(Long userId) {
+        logger.info("Verificando estado de membresía para usuario ID: {}", userId);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> {
+                    logger.error("Usuario no encontrado al verificar membresía - ID: {}", userId);
+                    return new UserNotFoundException("El usuario no existe");
+                });
+
+        Membership membership = user.getMembership();
+        
+        if (membership == null) {
+            logger.warn("El usuario no tiene una membresía activa - ID: {}", userId);
+            return MembershipStatusResponse.createInactiveResponse("El usuario no tiene una membresía activa");
+        }
+
+        LocalDate today = LocalDate.now();
+        
+        if (membership.getStatus() == MembershipStatus.ACTIVE) {
+            if (today.isAfter(membership.getEndDate())) {
+                // La membresía ha expirado
+                membership.setStatus(MembershipStatus.EXPIRED);
+                membershipRepository.save(membership);
+                logger.info("Membresía marcada como expirada - ID: {}, Fecha de vencimiento: {}", 
+                    membership.getIdMembership(), membership.getEndDate());
+                return MembershipStatusResponse.createInactiveResponse(
+                        "Su membresía ha expirado el " + membership.getEndDate(),
+                        MembershipStatus.EXPIRED
+                );
+            }
+            
+            // La membresía está activa y no ha expirado
+            logger.info("Membresía activa encontrada - ID: {}, Válida hasta: {}", 
+                membership.getIdMembership(), membership.getEndDate());
+            return MembershipStatusResponse.createActiveResponse(membership.getEndDate());
+            
+        } else if (membership.getStatus() == MembershipStatus.SUSPENDED) {
+            logger.info("Membresía suspendida - ID: {}, Razón: {}", 
+                membership.getIdMembership(), membership.getSuspensionReason());
+            return MembershipStatusResponse.createInactiveResponse(
+                    "Membresía suspendida: " + membership.getSuspensionReason(),
+                    MembershipStatus.SUSPENDED
+            );
+            
+        } else if (membership.getStatus() == MembershipStatus.EXPIRED) {
+            logger.info("Membresía expirada - ID: {}, Fecha de vencimiento: {}", 
+                membership.getIdMembership(), membership.getEndDate());
+            return MembershipStatusResponse.createInactiveResponse(
+                    "Su membresía expiró el " + membership.getEndDate(),
+                    MembershipStatus.EXPIRED
+            );
+            
+        } else if (membership.getStatus() == MembershipStatus.CANCELLED) {
+            logger.info("Membresía cancelada - ID: {}", membership.getIdMembership());
+            return MembershipStatusResponse.createInactiveResponse(
+                    "Su membresía ha sido cancelada",
+                    MembershipStatus.CANCELLED
+            );
+        }
+
+        // Estado no reconocido
+        logger.warn("Estado de membresía no reconocido - ID: {}, Estado: {}", 
+            membership.getIdMembership(), membership.getStatus());
+        return MembershipStatusResponse.createInactiveResponse(
+                "Estado de membresía no reconocido",
+                membership.getStatus()
+        );
     }
 }

@@ -3,7 +3,11 @@ package co.edu.uniquindio.FitZone.controller;
 import co.edu.uniquindio.FitZone.dto.request.LoginRequest;
 import co.edu.uniquindio.FitZone.dto.request.RefreshTokenRequest;
 import co.edu.uniquindio.FitZone.dto.request.ResetPasswordRequest;
+import co.edu.uniquindio.FitZone.dto.response.MembershipStatusResponse;
+import co.edu.uniquindio.FitZone.model.entity.User;
+import co.edu.uniquindio.FitZone.repository.UserRepository;
 import co.edu.uniquindio.FitZone.service.impl.UserDetailsServiceImpl;
+import co.edu.uniquindio.FitZone.service.interfaces.IMembershipService;
 import co.edu.uniquindio.FitZone.service.interfaces.IAuthService;
 import co.edu.uniquindio.FitZone.util.JwtUtil;
 import org.slf4j.Logger;
@@ -28,15 +32,21 @@ public class AuthController {
     private final UserDetailsServiceImpl userDetailsService;
     private final JwtUtil jwtUtil;
     private final IAuthService authService;
+    private final IMembershipService membershipService;
+    private final UserRepository userRepository;
 
     public AuthController(AuthenticationManager authenticationManager,
                           UserDetailsServiceImpl userDetailsService,
                           JwtUtil jwtUtil,
-                          IAuthService authService) {
+                          IAuthService authService,
+                          IMembershipService membershipService,
+                          UserRepository userRepository) {
         this.authenticationManager = authenticationManager;
         this.userDetailsService = userDetailsService;
         this.jwtUtil = jwtUtil;
         this.authService = authService;
+        this.membershipService = membershipService;
+        this.userRepository = userRepository;
     }
 
     // PASO 1: Login inicial (valida credenciales y envía OTP)
@@ -132,12 +142,24 @@ public class AuthController {
 
             logger.info("Login exitoso para usuario: {} - JWT y refresh token generados correctamente", email);
 
+            // Obtener estado de membresía una sola vez al iniciar sesión
+            MembershipStatusResponse membershipStatus = null;
+            try {
+                User user = userRepository.findByEmail(email).orElse(null);
+                if (user != null) {
+                    membershipStatus = membershipService.checkMembershipStatus(user.getIdUser());
+                }
+            } catch (Exception ex) {
+                logger.warn("No se pudo obtener el estado de membresía para {}: {}", email, ex.getMessage());
+            }
+
             return ResponseEntity.ok(createSuccessResponse(Map.of(
                     "accessToken", token,
-                    "refreshToken", refreshToken, // 🔹 Incluir refresh token
+                    "refreshToken", refreshToken,
                     "email", email,
                     "message", "Login exitoso",
-                    "step", 2
+                    "step", 2,
+                    "membershipStatus", membershipStatus
             )));
 
         } catch (Exception e) {

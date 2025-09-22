@@ -1,10 +1,10 @@
 package co.edu.uniquindio.FitZone.controller;
 
-
 import co.edu.uniquindio.FitZone.dto.request.CreateMembershipRequest;
 import co.edu.uniquindio.FitZone.dto.request.PaymentIntentRequest;
 import co.edu.uniquindio.FitZone.dto.request.SuspendMembershipRequest;
 import co.edu.uniquindio.FitZone.dto.response.MembershipResponse;
+import co.edu.uniquindio.FitZone.dto.response.MembershipStatusResponse;
 import co.edu.uniquindio.FitZone.integration.payment.StripeService;
 import co.edu.uniquindio.FitZone.service.interfaces.IMembershipService;
 import com.stripe.exception.StripeException;
@@ -15,7 +15,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
 /**
  * Controlador REST para gestionar las membresías de los usuarios.
  * Proporciona endpoints para crear, consultar, suspender, reactivar y cancelar membresías
@@ -119,8 +118,8 @@ public class MembershipController {
         
         try {
             MembershipResponse response = membershipService.reactivateMembership(userId);
-            logger.info("Membresía reactivada exitosamente - ID: {}, Usuario: {}, Estado: {}", 
-                response.id(), response.userId(), response.status());
+            logger.info("Membresía reactivada exitosamente - ID: {}, Usuario: {}", 
+                response.id(), response.userId());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             logger.error("Error al reactivar membresía - Usuario ID: {}, Error: {}", 
@@ -129,19 +128,20 @@ public class MembershipController {
         }
     }
 
-    @DeleteMapping("/cancel/{userId}")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'RECEPTIONIST')")
-    public ResponseEntity<Void> cancelMembership(@PathVariable Long userId) {
-        logger.info("DELETE /memberships/cancel/{} - Cancelación de membresía solicitada por usuario autorizado", userId);
+    @GetMapping("/status/{userId}")
+    public ResponseEntity<MembershipStatusResponse> checkMembershipStatus(@PathVariable Long userId) {
+        logger.debug("GET /memberships/status/{} - Verificando estado de membresía", userId);
         
         try {
-            membershipService.cancelMembership(userId);
-            logger.info("Membresía cancelada exitosamente - Usuario ID: {}", userId);
-            return ResponseEntity.noContent().build();
+            MembershipStatusResponse response = membershipService.checkMembershipStatus(userId);
+            logger.debug("Estado de membresía verificado - Usuario ID: {}, Activa: {}, Estado: {}", 
+                userId, response.isActive(), response.getStatus());
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            logger.error("Error al cancelar membresía - Usuario ID: {}, Error: {}", 
+            logger.error("Error al verificar estado de membresía - Usuario ID: {}, Error: {}", 
                 userId, e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(MembershipStatusResponse.createInactiveResponse("Error al verificar el estado de la membresía"));
         }
     }
 }

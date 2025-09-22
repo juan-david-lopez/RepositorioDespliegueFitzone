@@ -3,6 +3,7 @@ package co.edu.uniquindio.FitZone.service.interfaces;
 import co.edu.uniquindio.FitZone.dto.request.CreateMembershipRequest;
 import co.edu.uniquindio.FitZone.dto.request.SuspendMembershipRequest;
 import co.edu.uniquindio.FitZone.dto.response.MembershipResponse;
+import co.edu.uniquindio.FitZone.dto.response.MembershipStatusResponse;
 
 /**
  * Servicio para la gestión de membresías de gimnasio.
@@ -63,4 +64,11 @@ public interface IMembershipService {
      */
     void cancelMembership(Long userId);
 
+    /**
+     * Verifica el estado de la membresía de un usuario.
+     *
+     * @param userId ID del usuario.
+     * @return MembershipStatusResponse con el estado actual de la membresía.
+     */
+    MembershipStatusResponse checkMembershipStatus(Long userId);
 }

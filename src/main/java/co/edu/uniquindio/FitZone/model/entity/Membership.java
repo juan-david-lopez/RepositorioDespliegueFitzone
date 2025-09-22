@@ -8,6 +8,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 
 /**
  * Entity que representa una membresía en el sistema FitZone.
@@ -55,7 +56,35 @@ public class Membership {
 
     @PrePersist
     protected void onCreated(){
-        status =  MembershipStatus.ACTIVE;
+        status = MembershipStatus.ACTIVE;
+        startDate = LocalDate.now();
+        endDate = startDate.plusMonths(1); // Establecer fecha de vencimiento a 1 mes
+    }
+
+    /**
+     * Verifica si la membresía está actualmente activa
+     * @return true si la membresía está activa y no ha expirado
+     */
+    public boolean isActive() {
+        if (status != MembershipStatus.ACTIVE) {
+            return false;
+        }
+        return LocalDate.now().isBefore(endDate) || LocalDate.now().isEqual(endDate);
+    }
+
+    /**
+     * Renueva la membresía por otro mes
+     */
+    public void renew() {
+        if (endDate.isBefore(LocalDate.now())) {
+            // Si la membresía ya expiró, reiniciar desde hoy
+            startDate = LocalDate.now();
+        } else {
+            // Si aún no ha expirado, extender desde la fecha de vencimiento
+            startDate = endDate;
+        }
+        endDate = startDate.plusMonths(1);
+        status = MembershipStatus.ACTIVE;
     }
 
 
