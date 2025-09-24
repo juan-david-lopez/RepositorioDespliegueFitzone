@@ -54,7 +54,7 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:4200",
                 "https://frontend-fitzone-oaoh.vercel.app",
-                "https://frontend-fitzone-oaoh-pzfqwft5h-juan-lopez-s-projects.vercel.app",
+                "https://frontend-fitzone-oaoh-dfidh07a9-juan-lopez-s-projects.vercel.app",
                 "https://frontend-fitzone-oaoh-6u53o5wsw-juan-lopez-s-projects.vercel.app"
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
