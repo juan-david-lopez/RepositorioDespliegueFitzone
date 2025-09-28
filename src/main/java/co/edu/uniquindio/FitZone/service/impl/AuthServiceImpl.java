@@ -88,6 +88,7 @@ public class AuthServiceImpl implements IAuthService {
     @Override
     public String completeLogin(String email, String otp) {
         if (!validateOTP(email, otp)) {
+            logger.warn("OTP inválido o expirado para usuario: {}", email);
             throw new RuntimeException("OTP inválido o expirado");
         }
 

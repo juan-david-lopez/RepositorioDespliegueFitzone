@@ -97,7 +97,7 @@ public class UserServiceImpl implements IUserService{
         //Guardamos el usuario en la base de datos
         UserResponse response = getUserResponse(user);
         logger.info("Usuario registrado exitosamente por administrador - ID: {}, Email: {}, Rol: {}",
-            response.idUser(), response.email(), response.userRole());
+            response.idUser(), response.email(), response.role());
         return response;
     }
 
@@ -128,7 +128,7 @@ public class UserServiceImpl implements IUserService{
         // 🚀 Retornar la respuesta con los datos persistidos
         UserResponse response = getUserResponse(savedUser);
         logger.info("Usuario registrado exitosamente de forma pública - ID: {}, Email: {}, Rol: {}",
-                response.idUser(), response.email(), response.userRole());
+                response.idUser(), response.email(), response.role());
 
         return response;
     }
@@ -236,19 +236,17 @@ public class UserServiceImpl implements IUserService{
         User updatedUser = userRepository.save(existingUser);
         logger.debug("Usuario guardado exitosamente con ID: {}", updatedUser.getIdUser());
 
+        // Construir el nombre completo
+        String fullName = updatedUser.getPersonalInformation().getFirstName();
+        if (updatedUser.getPersonalInformation().getLastName() != null) {
+            fullName += " " + updatedUser.getPersonalInformation().getLastName();
+        }
+
         return new UserResponse(
                 updatedUser.getIdUser(),
-                updatedUser.getPersonalInformation().getFirstName(),
-                updatedUser.getPersonalInformation().getLastName(),
+                fullName.trim(),
                 updatedUser.getEmail(),
-                updatedUser.getPersonalInformation().getDocumentType(), // Agregado
-                updatedUser.getPersonalInformation().getDocumentNumber(), // Agregado
-                updatedUser.getPersonalInformation().getPhoneNumber(),
-                updatedUser.getPersonalInformation().getBirthDate(), // Agregado
-                updatedUser.getPersonalInformation().getEmergencyContactPhone(), // Agregado
-                updatedUser.getPersonalInformation().getMedicalConditions(), // Agregado
-                updatedUser.getRole(),
-                updatedUser.getCreatedAt()
+                updatedUser.getRole().name()
         );
     }
 
@@ -315,19 +313,17 @@ public class UserServiceImpl implements IUserService{
         logger.debug("Usuario encontrado por ID: {} (ID: {})",
             user.getPersonalInformation().getFirstName(), idUser);
 
+        // Construir el nombre completo
+        String fullName = user.getPersonalInformation().getFirstName();
+        if (user.getPersonalInformation().getLastName() != null) {
+            fullName += " " + user.getPersonalInformation().getLastName();
+        }
+
         return new UserResponse(
                 user.getIdUser(),
-                user.getPersonalInformation().getFirstName(),
-                user.getPersonalInformation().getLastName(),
+                fullName.trim(),
                 user.getEmail(),
-                user.getPersonalInformation().getDocumentType(), // Agregado
-                user.getPersonalInformation().getDocumentNumber(), // Agregado
-                user.getPersonalInformation().getPhoneNumber(),
-                user.getPersonalInformation().getBirthDate(), // Agregado
-                user.getPersonalInformation().getEmergencyContactPhone(), // Agregado
-                user.getPersonalInformation().getMedicalConditions(), // Agregado
-                user.getRole(),
-                user.getCreatedAt()
+                user.getRole().name()
         );
     }
 
@@ -343,20 +339,20 @@ public class UserServiceImpl implements IUserService{
         logger.debug("Se encontraron {} usuarios activos", users.size());
 
         return users.stream()
-                .map(user -> new UserResponse(
-                        user.getIdUser(),
-                        user.getPersonalInformation().getFirstName(),
-                        user.getPersonalInformation().getLastName(),
-                        user.getEmail(),
-                        user.getPersonalInformation().getDocumentType(), // Agregado
-                        user.getPersonalInformation().getDocumentNumber(), // Agregado
-                        user.getPersonalInformation().getPhoneNumber(),
-                        user.getPersonalInformation().getBirthDate(), // Agregado
-                        user.getPersonalInformation().getEmergencyContactPhone(), // Agregado
-                        user.getPersonalInformation().getMedicalConditions(), // Agregado
-                        user.getRole(),
-                        user.getCreatedAt()
-                ))
+                .map(user -> {
+                    // Construir el nombre completo
+                    String fullName = user.getPersonalInformation().getFirstName();
+                    if (user.getPersonalInformation().getLastName() != null) {
+                        fullName += " " + user.getPersonalInformation().getLastName();
+                    }
+                    
+                    return new UserResponse(
+                            user.getIdUser(),
+                            fullName.trim(),
+                            user.getEmail(),
+                            user.getRole().name()
+                    );
+                })
                 .toList();
     }
 
@@ -378,19 +374,17 @@ public class UserServiceImpl implements IUserService{
         logger.debug("Usuario encontrado por email: {} (ID: {})",
             user.getPersonalInformation().getFirstName(), user.getIdUser());
 
+        // Construir el nombre completo
+        String fullName = user.getPersonalInformation().getFirstName();
+        if (user.getPersonalInformation().getLastName() != null) {
+            fullName += " " + user.getPersonalInformation().getLastName();
+        }
+
         return new UserResponse(
                 user.getIdUser(),
-                user.getPersonalInformation().getFirstName(),
-                user.getPersonalInformation().getLastName(),
+                fullName.trim(),
                 user.getEmail(),
-                user.getPersonalInformation().getDocumentType(), // Agregado
-                user.getPersonalInformation().getDocumentNumber(), // Agregado
-                user.getPersonalInformation().getPhoneNumber(),
-                user.getPersonalInformation().getBirthDate(), // Agregado
-                user.getPersonalInformation().getEmergencyContactPhone(), // Agregado
-                user.getPersonalInformation().getMedicalConditions(), // Agregado
-                user.getRole(),
-                user.getCreatedAt()
+                user.getRole().name()
         );
     }
 
@@ -412,19 +406,17 @@ public class UserServiceImpl implements IUserService{
         logger.debug("Usuario encontrado por documento: {} (ID: {})",
             user.getPersonalInformation().getFirstName(), user.getIdUser());
 
+        // Construir el nombre completo
+        String fullName = user.getPersonalInformation().getFirstName();
+        if (user.getPersonalInformation().getLastName() != null) {
+            fullName += " " + user.getPersonalInformation().getLastName();
+        }
+
         return new UserResponse(
                 user.getIdUser(),
-                user.getPersonalInformation().getFirstName(),
-                user.getPersonalInformation().getLastName(),
+                fullName.trim(),
                 user.getEmail(),
-                user.getPersonalInformation().getDocumentType(), // Agregado
-                user.getPersonalInformation().getDocumentNumber(), // Agregado
-                user.getPersonalInformation().getPhoneNumber(),
-                user.getPersonalInformation().getBirthDate(), // Agregado
-                user.getPersonalInformation().getEmergencyContactPhone(), // Agregado
-                user.getPersonalInformation().getMedicalConditions(), // Agregado
-                user.getRole(),
-                user.getCreatedAt()
+                user.getRole().name()
         );
     }
 

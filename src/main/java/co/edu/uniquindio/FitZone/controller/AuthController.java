@@ -1,10 +1,12 @@
 package co.edu.uniquindio.FitZone.controller;
 
 import co.edu.uniquindio.FitZone.dto.request.LoginRequest;
-import co.edu.uniquindio.FitZone.dto.request.RefreshTokenRequest;
-import co.edu.uniquindio.FitZone.dto.request.ResetPasswordRequest;
-import co.edu.uniquindio.FitZone.dto.response.MembershipStatusResponse;
+import co.edu.uniquindio.FitZone.dto.response.AuthResponse;
+import co.edu.uniquindio.FitZone.dto.response.MembershipInfo;
+import co.edu.uniquindio.FitZone.dto.response.UserResponse;
+import co.edu.uniquindio.FitZone.model.entity.Membership;
 import co.edu.uniquindio.FitZone.model.entity.User;
+import co.edu.uniquindio.FitZone.model.enums.MembershipStatus;
 import co.edu.uniquindio.FitZone.repository.UserRepository;
 import co.edu.uniquindio.FitZone.service.impl.UserDetailsServiceImpl;
 import co.edu.uniquindio.FitZone.service.interfaces.IMembershipService;
@@ -16,7 +18,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.web.bind.annotation.*;
-
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -65,7 +68,7 @@ public class AuthController {
             if (!valid) {
                 logger.warn("Credenciales inválidas para usuario: {}", request.email());
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(createErrorResponse("Credenciales inválidas"));
+                        .body(createErrorResponse("Credenciales inválidas","detalles"));
             }
 
             // Generar OTP y enviarlo por email
@@ -74,12 +77,12 @@ public class AuthController {
 
             logger.info("OTP generado y enviado para usuario: {}", request.email());
 
-            return ResponseEntity.ok(createSuccessResponse(Map.of(
-                    "status", "OTP_REQUIRED",
-                    "message", "Se ha enviado un código de verificación a tu correo electrónico",
-                    "email", request.email(),
-                    "step", 1
-            )));
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "OTP_REQUIRED");
+            response.put("message", "Se ha enviado un código de verificación a tu correo electrónico");
+            response.put("email", request.email());
+            response.put("step", 1);
+            return ResponseEntity.ok(createSuccessResponse(response));
 
         } catch (Exception e) {
             logger.error("Error en login-2fa para usuario {}: {}", request.email(), e.getMessage(), e);
@@ -91,81 +94,23 @@ public class AuthController {
     // PASO 2: Verificar OTP y generar JWT
     @PostMapping("/verify-otp")
     public ResponseEntity<?> verifyOtp(@RequestParam String email, @RequestParam String otp) {
-        logger.info("POST /auth/verify-otp - Verificando OTP para usuario: {}", email);
-
-        // Validar parámetros
-        if (email == null || email.trim().isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(createErrorResponse("Email es requerido"));
-        }
-
-        if (otp == null || otp.trim().isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(createErrorResponse("OTP es requerido"));
-        }
+        logger.info("POST /auth/verify-otp - Verificación de OTP para: {}", email);
 
         try {
-            // Validar OTP
-            boolean validOtp = authService.validateOTP(email, otp);
-            if (!validOtp) {
-                logger.warn("OTP inválido o expirado para usuario: {}", email);
+            boolean valid = authService.validateOTP(email, otp);
+            if (valid) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("message", "OTP verificado correctamente");
+                return ResponseEntity.ok(createSuccessResponse(response));
+            } else {
+                logger.warn("Intento fallido de verificación de OTP para: {}", email);
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(createErrorResponse("Código de verificación inválido o expirado"));
+                        .body(createErrorResponse("Error de autenticación", "OTP inválido o expirado"));
             }
-
-            // Generar JWT final
-            String token = authService.loginAfterOTP(email);
-
-            // Validar que el token se generó correctamente
-            if (token == null || token.trim().isEmpty()) {
-                logger.error("Error: Token JWT generado está vacío para usuario: {}", email);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body(createErrorResponse("Error generando token de autenticación"));
-            }
-
-            // Verificar formato básico del JWT
-            if (!isValidJwtFormat(token)) {
-                logger.error("Error: Token JWT generado tiene formato inválido para usuario: {}", email);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body(createErrorResponse("Error en formato del token de autenticación"));
-            }
-
-            // 🔹 NUEVO: Generar refresh token
-            String refreshToken = authService.generateRefreshToken(email);
-
-            // Validar que el refresh token se generó correctamente
-            if (refreshToken == null || refreshToken.trim().isEmpty()) {
-                logger.error("Error: Refresh token generado está vacío para usuario: {}", email);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body(createErrorResponse("Error generando refresh token"));
-            }
-
-            logger.info("Login exitoso para usuario: {} - JWT y refresh token generados correctamente", email);
-
-            // Obtener estado de membresía una sola vez al iniciar sesión
-            MembershipStatusResponse membershipStatus = null;
-            try {
-                User user = userRepository.findByEmail(email).orElse(null);
-                if (user != null) {
-                    membershipStatus = membershipService.checkMembershipStatus(user.getIdUser());
-                }
-            } catch (Exception ex) {
-                logger.warn("No se pudo obtener el estado de membresía para {}: {}", email, ex.getMessage());
-            }
-
-            return ResponseEntity.ok(createSuccessResponse(Map.of(
-                    "accessToken", token,
-                    "refreshToken", refreshToken,
-                    "email", email,
-                    "message", "Login exitoso",
-                    "step", 2,
-                    "membershipStatus", membershipStatus
-            )));
-
         } catch (Exception e) {
-            logger.error("Error al verificar OTP para usuario {}: {}", email, e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(createErrorResponse("Error verificando código de verificación", e.getMessage()));
+            logger.error("Error al verificar OTP para: {} - Error: {}", email, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(createErrorResponse("Error verificando OTP", e.getMessage()));
         }
     }
 
@@ -176,7 +121,7 @@ public class AuthController {
 
         if (email == null || email.trim().isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(createErrorResponse("Email es requerido"));
+                    .body(createErrorResponse("Email es requerido","detalles"));
         }
 
         try {
@@ -185,10 +130,10 @@ public class AuthController {
 
             logger.info("OTP reenviado para usuario: {}", email);
 
-            return ResponseEntity.ok(createSuccessResponse(Map.of(
-                    "message", "Código de verificación reenviado exitosamente",
-                    "email", email
-            )));
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Código de verificación reenviado exitosamente");
+            response.put("email", email);
+            return ResponseEntity.ok(createSuccessResponse(response));
 
         } catch (Exception e) {
             logger.error("Error reenviando OTP para usuario {}: {}", email, e.getMessage(), e);
@@ -204,10 +149,10 @@ public class AuthController {
 
         try {
             authService.requestPasswordReset(email);
-            return ResponseEntity.ok(createSuccessResponse(Map.of(
-                    "message", "Se ha enviado un email con las instrucciones para restablecer la contraseña",
-                    "email", email
-            )));
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Se ha enviado un email con las instrucciones para restablecer la contraseña");
+            response.put("email", email);
+            return ResponseEntity.ok(createSuccessResponse(response));
 
         } catch (Exception e) {
             logger.error("Error al procesar solicitud de restablecimiento para: {} - Error: {}", email, e.getMessage(), e);
@@ -215,71 +160,15 @@ public class AuthController {
                     .body(createErrorResponse("Error procesando solicitud de restablecimiento", e.getMessage()));
         }
     }
-
-    // RESET PASSWORD
-    @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
-        logger.info("POST /auth/reset-password - Restablecimiento de contraseña con token: {}", request.token());
-
-        try {
-            authService.resetPassword(request);
-            return ResponseEntity.ok(createSuccessResponse(Map.of(
-                    "message", "Contraseña restablecida exitosamente"
-            )));
-
-        } catch (Exception e) {
-            logger.error("Error al restablecer contraseña con token: {} - Error: {}", request.token(), e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(createErrorResponse("Error restableciendo contraseña", e.getMessage()));
-        }
-    }
-    // 🔹 NUEVO ENDPOINT: Refresh Token
-    @PostMapping("/refresh")
-    public ResponseEntity<?> refreshToken(@RequestBody RefreshTokenRequest request) {
-        logger.info("POST /auth/refresh - Refrescando token");
-
-        if (request.refreshToken() == null || request.refreshToken().trim().isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(createErrorResponse("Refresh token es requerido"));
-        }
-
-        try {
-            // Validar y refrescar el token usando el servicio
-            String newAccessToken = authService.refreshAccessToken(request.refreshToken());
-
-            logger.info("Token refrescado exitosamente");
-
-            return ResponseEntity.ok(createSuccessResponse(Map.of(
-                    "accessToken", newAccessToken,
-                    "refreshToken", request.refreshToken(), // Mismo refresh token
-                    "tokenType", "Bearer",
-                    "message", "Token refrescado exitosamente"
-            )));
-
-        } catch (RuntimeException e) {
-            logger.warn("Error refrescando token: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(createErrorResponse(e.getMessage()));
-        } catch (Exception e) {
-            logger.error("Error inesperado refrescando token: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(createErrorResponse("Error interno refrescando token", e.getMessage()));
-        }
-    }
-
-    // Métodos de utilidad
-    private Map<String, Object> createSuccessResponse(Map<String, Object> data) {
+    
+    private Map<String, Object> createSuccessResponse(Object data) {
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
         response.put("timestamp", System.currentTimeMillis());
-        response.putAll(data);
+        response.put("data", data);
         return response;
     }
-
-    private Map<String, Object> createErrorResponse(String error) {
-        return createErrorResponse(error, null);
-    }
-
+    
     private Map<String, Object> createErrorResponse(String error, String details) {
         Map<String, Object> response = new HashMap<>();
         response.put("success", false);
@@ -300,5 +189,63 @@ public class AuthController {
                 !parts[0].isEmpty() &&
                 !parts[1].isEmpty() &&
                 !parts[2].isEmpty();
+    }
+    
+    /**
+     * Obtiene la información detallada de la membresía de un usuario
+     */
+    private MembershipInfo getMembershipInfo(User user) {
+        if (user == null || user.getMembership() == null) {
+            return MembershipInfo.builder()
+                    .isActive(false)
+                    .status("INACTIVE")
+                    .statusMessage("No tiene una membresía activa")
+                    .build();
+        }
+
+        Membership membership = user.getMembership();
+        LocalDate today = LocalDate.now();
+        boolean isActive = membership.getStatus() == MembershipStatus.ACTIVE && 
+                         !today.isAfter(membership.getEndDate());
+        
+        long daysRemaining = 0;
+        if (isActive) {
+            daysRemaining = ChronoUnit.DAYS.between(today, membership.getEndDate());
+        }
+
+        return MembershipInfo.builder()
+                .id(membership.getIdMembership())
+                .type(membership.getType())
+                .startDate(membership.getStartDate())
+                .endDate(membership.getEndDate())
+                .status(membership.getStatus().name())
+                .statusMessage(getStatusMessage(membership))
+                .daysRemaining(daysRemaining)
+                .isActive(isActive)
+                .build();
+    }
+    
+    /**
+     * Obtiene un mensaje descriptivo del estado de la membresía
+     */
+    private String getStatusMessage(Membership membership) {
+        if (membership == null) {
+            return "No tiene una membresía activa";
+        }
+        
+        switch (membership.getStatus()) {
+            case ACTIVE:
+                return "Membresía activa hasta el " + membership.getEndDate();
+            case SUSPENDED:
+                return "Membresía suspendida: " + 
+                       (membership.getSuspensionReason() != null ? 
+                        membership.getSuspensionReason() : "Razón no especificada");
+            case EXPIRED:
+                return "Membresía expirada el " + membership.getEndDate();
+            case CANCELLED:
+                return "Membresía cancelada";
+            default:
+                return "Estado de membresía desconocido";
+        }
     }
 }

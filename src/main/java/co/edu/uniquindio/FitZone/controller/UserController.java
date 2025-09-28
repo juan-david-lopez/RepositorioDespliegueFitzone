@@ -40,7 +40,7 @@ public class UserController {
         try {
             UserResponse response = userService.registerUser(request);
             logger.info("Usuario registrado exitosamente por usuario autorizado - ID: {}, Email: {}, Rol: {}", 
-                response.idUser(), response.email(), response.userRole());
+                response.idUser(), response.email(), response.role());
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (Exception e) {
             logger.error("Error al registrar usuario por usuario autorizado - Email: {}, Error: {}", 
@@ -58,7 +58,7 @@ public class UserController {
         try {
             UserResponse response = userService.publicRegisterUser(request);
             logger.info("Usuario registrado exitosamente de forma pública - ID: {}, Email: {}, Rol: {}", 
-                response.idUser(), response.email(), response.userRole());
+                response.idUser(), response.email(), response.role());
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (Exception e) {
             logger.error("Error al registrar usuario de forma pública - Email: {}, Error: {}", 
@@ -76,7 +76,7 @@ public class UserController {
         try {
             UserResponse response = userService.updateUser(idUser, request);
             logger.info("Usuario actualizado exitosamente - ID: {}, Email: {}, Nombre: {}", 
-                idUser, response.email(), response.firstName());
+                idUser, response.email(), response.name());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             logger.error("Error al actualizar usuario - ID: {}, Error: {}", 
@@ -107,7 +107,7 @@ public class UserController {
         try {
             UserResponse response = userService.getUserById(idUser);
             logger.debug("Usuario encontrado por ID - ID: {}, Nombre: {}, Email: {}", 
-                idUser, response.firstName(), response.email());
+                idUser, response.name(), response.email());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             logger.error("Error al consultar usuario por ID - ID: {}, Error: {}", 
@@ -137,7 +137,7 @@ public class UserController {
         try {
             UserResponse response = userService.getUserByEmail(email);
             logger.debug("Usuario encontrado por email - Email: {}, ID: {}, Nombre: {}", 
-                email, response.idUser(), response.firstName());
+                email, response.idUser(), response.name());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             logger.error("Error al consultar usuario por email - Email: {}, Error: {}", 
@@ -153,7 +153,7 @@ public class UserController {
         try {
             UserResponse response = userService.getUserByDocumentNumber(documentNumber);
             logger.debug("Usuario encontrado por documento - Documento: {}, ID: {}, Nombre: {}", 
-                documentNumber, response.idUser(), response.firstName());
+                documentNumber, response.idUser(), response.name());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             logger.error("Error al consultar usuario por documento - Documento: {}, Error: {}", 

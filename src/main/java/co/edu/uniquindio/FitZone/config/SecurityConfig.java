@@ -52,7 +52,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(
-                "http://localhost:4200",
+                "http://localhost:3000",
                 "https://frontend-fitzone-oaoh.vercel.app",
                 "https://frontend-fitzone-oaoh-git-feat-mem-ed8561-juan-lopez-s-projects.vercel.app",
                 "https://frontend-fitzone-oaoh-git-feat-mem-ed8561-juan-lopez-s-projects.vercel.app"
