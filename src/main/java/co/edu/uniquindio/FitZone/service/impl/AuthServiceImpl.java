@@ -37,9 +37,13 @@ public class AuthServiceImpl implements IAuthService {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
 
-    // Almacenamiento temporal de OTPs
-    private final Map<String, String> otpStorage = new ConcurrentHashMap<>();
-    private final Map<String, LocalDateTime> otpExpiry = new ConcurrentHashMap<>();
+    // Almacenamiento temporal de OTPs para LOGIN
+    private final Map<String, String> loginOtpStorage = new ConcurrentHashMap<>();
+    private final Map<String, LocalDateTime> loginOtpExpiry = new ConcurrentHashMap<>();
+
+    // Almacenamiento temporal de OTPs para REGISTRO
+    private final Map<String, String> registrationOtpStorage = new ConcurrentHashMap<>();
+    private final Map<String, LocalDateTime> registrationOtpExpiry = new ConcurrentHashMap<>();
 
     public AuthServiceImpl(AuthenticationManager authenticationManager,
                            UserDetailsServiceImpl userDetailsService,
@@ -53,6 +57,69 @@ public class AuthServiceImpl implements IAuthService {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
+    }
+
+    // ---------------- REGISTRO CON OTP ----------------
+
+    @Override
+    public String generateRegistrationOTP(String email) {
+        String otp = RandomStringUtils.randomNumeric(6);
+        registrationOtpStorage.put(email, otp);
+        registrationOtpExpiry.put(email, LocalDateTime.now().plusMinutes(10)); // 10 minutos para registro
+        logger.info("OTP de registro generado para {}: {}", email, otp);
+        return otp;
+    }
+
+    @Override
+    public boolean validateRegistrationOTP(String email, String otp) {
+        logger.info("Validando OTP de registro para email: {} con código: {}", email, otp);
+        logger.info("OTPs de registro almacenados: {}", registrationOtpStorage.keySet());
+
+        if (!registrationOtpStorage.containsKey(email)) {
+            logger.warn("No se encontró OTP de registro para: {}", email);
+            logger.info("Emails con OTP de registro disponibles: {}", registrationOtpStorage.keySet());
+            return false;
+        }
+
+        String storedOtp = registrationOtpStorage.get(email);
+        LocalDateTime expiry = registrationOtpExpiry.get(email);
+
+        logger.info("OTP almacenado para {}: {}, OTP recibido: {}", email, storedOtp, otp);
+        logger.info("Fecha de expiración: {}, Fecha actual: {}", expiry, LocalDateTime.now());
+
+        if (expiry.isBefore(LocalDateTime.now())) {
+            registrationOtpStorage.remove(email);
+            registrationOtpExpiry.remove(email);
+            logger.warn("OTP de registro expirado para: {}", email);
+            return false;
+        }
+
+        boolean valid = storedOtp.equals(otp);
+        if (valid) {
+            registrationOtpStorage.remove(email);
+            registrationOtpExpiry.remove(email);
+            logger.info("OTP de registro válido para: {}", email);
+        } else {
+            logger.warn("OTP de registro inválido para: {}. Esperado: {}, Recibido: {}", email, storedOtp, otp);
+        }
+        return valid;
+    }
+
+    @Override
+    public void sendRegistrationOTPEmail(String email, String otp) {
+        Context context = new Context();
+        context.setVariable("userName", "Nuevo usuario");
+        context.setVariable("otp", otp);
+        context.setVariable("purpose", "verificar tu registro");
+        String subject = "Verificación de registro - FitZone";
+
+        try {
+            emailService.sendTemplatedEmail(email, subject, "otp-template", context);
+            logger.info("OTP de registro enviado a {}", email);
+        } catch (IOException e) {
+            logger.error("Error enviando OTP de registro a {}: {}", email, e.getMessage());
+            throw new RuntimeException("Error enviando OTP de registro: " + e.getMessage(), e);
+        }
     }
 
     // ---------------- LOGIN CON 2FA ----------------
@@ -103,8 +170,8 @@ public class AuthServiceImpl implements IAuthService {
     @Override
     public String generateOTP(String email) {
         String otp = RandomStringUtils.randomNumeric(6);
-        otpStorage.put(email, otp);
-        otpExpiry.put(email, LocalDateTime.now().plusMinutes(5));
+        loginOtpStorage.put(email, otp);
+        loginOtpExpiry.put(email, LocalDateTime.now().plusMinutes(5));
         logger.info("OTP generado para {}: {}", email, otp);
         return otp;
     }
@@ -115,33 +182,41 @@ public class AuthServiceImpl implements IAuthService {
                 .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado"));
 
         Context context = new Context();
-        context.setVariable("userName", user.getPersonalInformation().getFirstName());
+
+        // Manejar el caso donde PersonalInformation puede ser null
+        String userName = "Usuario";
+        if (user.getPersonalInformation() != null &&
+            user.getPersonalInformation().getFirstName() != null) {
+            userName = user.getPersonalInformation().getFirstName();
+        }
+
+        context.setVariable("userName", userName);
         context.setVariable("otp", otp);
         String subject = "Código de verificación - FitZone";
 
         try {
             emailService.sendTemplatedEmail(email, subject, "otp-template", context);
+            logger.info("OTP enviado a {}", email);
         } catch (IOException e) {
+            logger.error("Error enviando OTP a {}: {}", email, e.getMessage());
             throw new RuntimeException("Error enviando OTP: " + e.getMessage(), e);
         }
-
-        logger.info("OTP enviado a {}", email);
     }
 
     @Override
     public boolean validateOTP(String email, String otp) {
-        if (!otpStorage.containsKey(email)) return false;
+        if (!loginOtpStorage.containsKey(email)) return false;
 
-        if (otpExpiry.get(email).isBefore(LocalDateTime.now())) {
-            otpStorage.remove(email);
-            otpExpiry.remove(email);
+        if (loginOtpExpiry.get(email).isBefore(LocalDateTime.now())) {
+            loginOtpStorage.remove(email);
+            loginOtpExpiry.remove(email);
             return false;
         }
 
-        boolean valid = otpStorage.get(email).equals(otp);
+        boolean valid = loginOtpStorage.get(email).equals(otp);
         if (valid) {
-            otpStorage.remove(email);
-            otpExpiry.remove(email);
+            loginOtpStorage.remove(email);
+            loginOtpExpiry.remove(email);
         }
         return valid;
     }
@@ -213,7 +288,15 @@ public class AuthServiceImpl implements IAuthService {
         userRepository.save(user);
 
         Context context = new Context();
-        context.setVariable("userName", user.getPersonalInformation().getFirstName());
+
+        // Manejar el caso donde PersonalInformation puede ser null
+        String userName = "Usuario";
+        if (user.getPersonalInformation() != null &&
+            user.getPersonalInformation().getFirstName() != null) {
+            userName = user.getPersonalInformation().getFirstName();
+        }
+
+        context.setVariable("userName", userName);
         context.setVariable("verificationCode", token);
         context.setVariable("expiryDate", user.getPasswordResetTokenExpiryDate());
         context.setVariable("gymEmail", "fitzoneuq@gmail.com");

@@ -13,6 +13,9 @@ import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.Optional;
+import java.util.Properties;
 
 /**
  * Servicio para enviar correos electrónicos utilizando SendGrid.
@@ -22,16 +25,32 @@ import java.io.IOException;
 @Service
 public class EmailService {
 
-    @Value("${sendgrid.api.key}")
+    @Value("${sendgrid.api.key:}")
     private String sendGridApiKey;
 
-    @Value("${sendgrid.from.email}")
+    @Value("${sendgrid.from.email:}")
     private String fromEmail;
 
     private final TemplateEngine templateEngine;
+    private final org.springframework.core.env.Environment environment;
 
-    public EmailService(TemplateEngine templateEngine) {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(EmailService.class);
+
+    public EmailService(TemplateEngine templateEngine, org.springframework.core.env.Environment environment) {
         this.templateEngine = templateEngine;
+        this.environment = environment;
+    }
+
+    private String resolveFromClasspath(String fileName, String key) {
+        try (InputStream is = EmailService.class.getClassLoader().getResourceAsStream(fileName)) {
+            if (is == null) return null;
+            Properties p = new Properties();
+            p.load(is);
+            String value = p.getProperty(key);
+            return (value != null && !value.isBlank()) ? value : null;
+        } catch (IOException e) {
+            return null;
+        }
     }
 
     /**
@@ -43,23 +62,51 @@ public class EmailService {
      */
     public void sendEmail(String toEmail, String subject, String body) {
 
-        Email from = new Email(fromEmail);
+        // Resolver API key con retrocompatibilidad: @Value -> Environment -> System env -> classpath props
+        String apiKey = Optional.ofNullable(sendGridApiKey)
+                .filter(s -> !s.isBlank())
+                .orElseGet(() -> Optional.ofNullable(environment.getProperty("sendgrid.api.key"))
+                        .filter(s -> !s.isBlank())
+                        .orElseGet(() -> Optional.ofNullable(System.getenv("SENDGRID_API_KEY"))
+                                .filter(s -> !s.isBlank())
+                                .orElseGet(() -> Optional.ofNullable(resolveFromClasspath("application-prod.properties", "sendgrid.api.key"))
+                                        .orElseGet(() -> resolveFromClasspath("application.properties", "sendgrid.api.key")))));
+
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new RuntimeException("SendGrid API key no configurada (propiedad 'sendgrid.api.key').");
+        }
+
+        // Resolver remitente: @Value -> Environment -> System env -> classpath props -> default
+        String fromAddr = Optional.ofNullable(fromEmail)
+                .filter(s -> !s.isBlank())
+                .orElseGet(() -> Optional.ofNullable(environment.getProperty("sendgrid.from.email"))
+                        .filter(s -> !s.isBlank())
+                        .orElseGet(() -> Optional.ofNullable(System.getenv("SENDGRID_FROM_EMAIL"))
+                                .filter(s -> !s.isBlank())
+                                .orElseGet(() -> Optional.ofNullable(resolveFromClasspath("application-prod.properties", "sendgrid.from.email"))
+                                        .orElseGet(() -> Optional.ofNullable(resolveFromClasspath("application.properties", "sendgrid.from.email"))
+                                                .orElse("murdersinc23@gmail.com")))));
+
+        Email from = new Email(fromAddr);
         Email to = new Email(toEmail);
         Content content = new Content("text/html", body);
         Mail mail = new Mail(from,subject,to,content);
 
-        SendGrid sg = new SendGrid(sendGridApiKey);
+        SendGrid sg = new SendGrid(apiKey);
         Request request = new Request();
         try{
             request.setMethod(Method.POST);
             request.setEndpoint("mail/send");
             request.setBody(mail.build());
             Response response = sg.api(request);
-            System.out.println(response.getStatusCode());
-            System.out.println(response.getBody());
-            System.out.println(response.getHeaders());
+            int status = response.getStatusCode();
+            String respBody = response.getBody();
+            log.info("SendGrid response status={}, body={} ", status, respBody);
+            if (status >= 400) {
+                throw new RuntimeException("Fallo al enviar email via SendGrid. status=" + status + ", body=" + respBody);
+            }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Error enviando email via SendGrid", e);
         }
 
     }

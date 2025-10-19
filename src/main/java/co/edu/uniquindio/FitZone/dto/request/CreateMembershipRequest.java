@@ -2,6 +2,7 @@ package co.edu.uniquindio.FitZone.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 
 /**
  * Clase que representa la solicitud para crear una membresía.
@@ -24,6 +25,7 @@ public record CreateMembershipRequest(
         Long mainLocationId,
 
         @NotBlank(message = "El ID de la intención de pago no puede estar vacío")
+        @Pattern(regexp = "pi_.*", message = "paymentIntentId debe tener formato pi_xxx")
         String paymentIntentId
 ) {
 }

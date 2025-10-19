@@ -1,9 +1,13 @@
 package co.edu.uniquindio.FitZone.service.interfaces;
 
 import co.edu.uniquindio.FitZone.dto.request.CreateMembershipRequest;
+import co.edu.uniquindio.FitZone.dto.request.ProcessPaymentRequest;
+import co.edu.uniquindio.FitZone.dto.request.RenewMembershipRequest;
 import co.edu.uniquindio.FitZone.dto.request.SuspendMembershipRequest;
 import co.edu.uniquindio.FitZone.dto.response.MembershipResponse;
 import co.edu.uniquindio.FitZone.dto.response.MembershipStatusResponse;
+import co.edu.uniquindio.FitZone.dto.response.ProcessPaymentResponse;
+import com.stripe.exception.StripeException;
 
 /**
  * Servicio para la gestión de membresías de gimnasio.
@@ -71,4 +75,23 @@ public interface IMembershipService {
      * @return MembershipStatusResponse con el estado actual de la membresía.
      */
     MembershipStatusResponse checkMembershipStatus(Long userId);
+
+    /**
+     * Renueva una membresía existente.
+     * Permite cambiar el tipo de membresía y duración.
+     *
+     * @param request Datos necesarios para renovar la membresía.
+     * @return MembershipResponse con los detalles de la membresía renovada.
+     */
+    MembershipResponse renewMembership(RenewMembershipRequest request);
+
+    /**
+     * Procesa un pago y crea una membresía en un solo paso.
+     * El backend crea el PaymentIntent usando el PaymentMethod del frontend.
+     *
+     * @param request Datos del pago y membresía (incluye paymentMethodId)
+     * @return ProcessPaymentResponse con los detalles del pago y membresía
+     * @throws StripeException Si hay error al procesar el pago con Stripe
+     */
+    ProcessPaymentResponse processPaymentAndCreateMembership(ProcessPaymentRequest request) throws StripeException;
 }

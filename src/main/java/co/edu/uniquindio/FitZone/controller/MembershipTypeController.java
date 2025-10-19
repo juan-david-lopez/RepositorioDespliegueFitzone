@@ -105,9 +105,9 @@ public class MembershipTypeController {
         logger.debug("GET /membership-types - Consulta de todos los tipos de membresía");
         
         try {
-            List<MembershipTypeResponse> membershipTypes = membershipTypeService.getMembershipTypes();
-            logger.debug("Se encontraron {} tipos de membresía", membershipTypes.size());
-            return ResponseEntity.ok(membershipTypes);
+            List<MembershipTypeResponse> response = membershipTypeService.getAllMembershipTypes();
+            logger.debug("Tipos de membresía encontrados: {} registros", response.size());
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             logger.error("Error al consultar todos los tipos de membresía - Error: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);

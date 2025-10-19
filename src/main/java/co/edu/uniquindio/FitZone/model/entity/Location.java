@@ -1,9 +1,10 @@
 package co.edu.uniquindio.FitZone.model.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,11 +14,12 @@ import java.util.List;
  * Contiene información sobre la sede, como su nombre, dirección, número de teléfono,
  * la franquicia a la que pertenece, los miembros asociados y su estado de actividad.
  */
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Entity
-@Table(name = "locations")
+@Table(name = "locations_base")
 public class Location {
 
     @Id
@@ -38,7 +40,8 @@ public class Location {
     private Franchise franchise;
 
     @OneToMany(mappedBy = "mainLocation")
-    private List<User> members;
+    @Builder.Default
+    private List<User> members = new ArrayList<>();
 
     @Column(name = "is_active", nullable = false)
     private Boolean isActive;

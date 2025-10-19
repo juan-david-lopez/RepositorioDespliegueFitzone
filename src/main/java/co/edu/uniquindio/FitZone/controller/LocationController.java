@@ -17,7 +17,7 @@ import java.util.List;
  * Proporciona endpoints para crear, actualizar y obtener ubicaciones.
  */
 @RestController
-@RequestMapping("/locations")
+@RequestMapping("/api/locations")  // ✅ FIX: Añadir prefijo /api
 public class LocationController {
 
     private static final Logger logger = LoggerFactory.getLogger(LocationController.class);

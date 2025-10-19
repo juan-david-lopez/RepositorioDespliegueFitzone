@@ -3,32 +3,35 @@ package co.edu.uniquindio.FitZone.model.entity;
 
 import co.edu.uniquindio.FitZone.model.enums.MembershipTypeName;
 import jakarta.persistence.*;
-import lombok.Getter;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.math.BigDecimal;
 
 /**
- * Entity que representa un tipo de membresía en el sistema FitZone.
- * Contiene información sobre el nombre, descripción, precio mensual y beneficios asociados a la membresía
- * como acceso a todas las ubicaciones, sesiones de clases grupales, entrenamiento personal y clases especializadas.
+ * Entidad que representa un tipo de membresía en el sistema FitZone.
+ * Basada en la tabla membership_types_base de PostgreSQL.
  */
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Entity
-@Table(name = "membership_types")
+@Table(name = "membership_types_base")
 public class MembershipType {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_membership_type")
     private Long idMembershipType;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "name", nullable = false, unique = true)
     private MembershipTypeName name;
 
+    @Column(name = "description")
     private String description;
 
     @Column(name = "monthly_price", nullable = false)
@@ -46,6 +49,32 @@ public class MembershipType {
     @Column(name = "specialized_classes_included", nullable = false)
     private Boolean specializedClassesIncluded;
 
+    // Métodos de compatibilidad para el código existente
+    public void setName(MembershipTypeName name) {
+        this.name = name;
+    }
 
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
+    public void setMonthlyPrice(BigDecimal monthlyPrice) {
+        this.monthlyPrice = monthlyPrice;
+    }
+
+    public void setAccessToAllLocation(boolean accessToAllLocation) {
+        this.accessToAllLocation = accessToAllLocation;
+    }
+
+    public void setGroupClassesSessionsIncluded(int groupClassesSessionsIncluded) {
+        this.groupClassesSessionsIncluded = groupClassesSessionsIncluded;
+    }
+
+    public void setPersonalTrainingIncluded(int personalTrainingIncluded) {
+        this.personalTrainingIncluded = personalTrainingIncluded;
+    }
+
+    public void setSpecializedClassesIncluded(boolean specializedClassesIncluded) {
+        this.specializedClassesIncluded = specializedClassesIncluded;
+    }
 }

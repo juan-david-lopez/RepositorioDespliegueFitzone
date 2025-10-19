@@ -1,6 +1,5 @@
 package co.edu.uniquindio.FitZone.repository;
 
-import co.edu.uniquindio.FitZone.dto.response.MembershipResponse;
 import co.edu.uniquindio.FitZone.model.entity.Membership;
 import co.edu.uniquindio.FitZone.model.enums.MembershipStatus;
 import org.springframework.data.repository.CrudRepository;
@@ -39,4 +38,39 @@ public interface MembershipRepository extends CrudRepository<Membership, Long> {
     List<Membership> findByStatusAndEndDateIsBefore(MembershipStatus status, LocalDate suspensionEnd);
 
 
+    /**
+     * Busca membresías por rango de fechas de inicio.
+     */
+    List<Membership> findByStartDateBetween(LocalDate startDate, LocalDate endDate);
+
+    /**
+     * Busca membresías por estado.
+     */
+    List<Membership> findByStatus(MembershipStatus status);
+
+    /**
+     * Busca membresías por tipo de membresía.
+     * Nota: Este método requiere una consulta personalizada ya que no hay relación JPA directa.
+     */
+    List<Membership> findByMembershipTypeId(Long membershipTypeId);
+
+    /**
+     * Busca membresías por estado y fecha de finalización anterior a una fecha dada.
+     */
+    List<Membership> findByStatusAndEndDateBefore(MembershipStatus status, LocalDate endDate);
+
+    /**
+     * Busca membresías por rango de fechas de finalización.
+     */
+    List<Membership> findByEndDateBetween(LocalDate startDate, LocalDate endDate);
+
+    /**
+     * Busca membresías por usuario ordenadas por fecha de inicio descendente.
+     */
+    List<Membership> findByUserIdOrderByStartDateDesc(Long userId);
+
+    /**
+     * Busca membresías por fecha de finalización exacta y estado.
+     */
+    List<Membership> findByEndDateAndStatus(LocalDate endDate, MembershipStatus status);
 }

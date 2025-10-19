@@ -55,6 +55,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
         String username = null;
         String jwt = null;
+        boolean tokenExpired = false;
 
         // Saltar validación JWT para endpoints públicos de autenticación
         if (isPublicEndpoint(requestURI)) {
@@ -72,15 +73,26 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                     username = jwtUtil.extractUsername(jwt);
                 } else {
                     logger.warn("Token JWT con formato inválido recibido en URI: {}", requestURI);
+                    sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Token JWT con formato inválido");
+                    return;
                 }
             } catch (MalformedJwtException e) {
                 logger.warn("Token JWT malformado recibido en URI: {}. Error: {}", requestURI, e.getMessage());
+                sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Token JWT malformado");
+                return;
             } catch (ExpiredJwtException e) {
                 logger.info("Token JWT expirado recibido en URI: {}. Usuario: {}", requestURI, e.getClaims().getSubject());
+                tokenExpired = true;
+                sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Token JWT expirado. Por favor, inicia sesión nuevamente.");
+                return;
             } catch (IllegalArgumentException e) {
                 logger.error("Error procesando token JWT en URI: {}. Error: {}", requestURI, e.getMessage());
+                sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Error procesando token JWT");
+                return;
             } catch (Exception e) {
                 logger.error("Error inesperado procesando token JWT en URI: {}. Error: {}", requestURI, e.getMessage());
+                sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Error de autenticación");
+                return;
             }
         }
 
@@ -137,5 +149,23 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 !parts[0].isEmpty() &&
                 !parts[1].isEmpty() &&
                 !parts[2].isEmpty();
+    }
+
+    /**
+     * Enviar respuesta de error en formato JSON
+     */
+    private void sendErrorResponse(HttpServletResponse response, int status, String message) throws IOException {
+        response.setStatus(status);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+
+        String jsonResponse = String.format(
+            "{\"error\": \"%s\", \"status\": %d, \"timestamp\": \"%s\"}",
+            message,
+            status,
+            java.time.Instant.now().toString()
+        );
+
+        response.getWriter().write(jsonResponse);
     }
 }

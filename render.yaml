@@ -6,7 +6,7 @@ services:
       dockerfile: Dockerfile
     envVars:
       - key: SPRING_PROFILES_ACTIVE
-        value: render
+        value: prod
       - key: DATABASE_URL
         fromDatabase:
           name: fitzone-db

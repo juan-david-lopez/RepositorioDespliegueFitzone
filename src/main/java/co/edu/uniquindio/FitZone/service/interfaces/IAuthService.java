@@ -11,6 +11,30 @@ import java.io.IOException;
  */
 public interface IAuthService {
 
+    // ------------------ REGISTRO CON OTP ------------------
+
+    /**
+     * Genera y envía OTP para verificación de registro
+     * @param email del usuario que se está registrando
+     * @return código OTP generado
+     */
+    String generateRegistrationOTP(String email);
+
+    /**
+     * Valida el OTP de registro
+     * @param email del usuario
+     * @param otp código OTP para verificar
+     * @return true si el OTP es válido
+     */
+    boolean validateRegistrationOTP(String email, String otp);
+
+    /**
+     * Envía OTP de registro por email
+     * @param email destinatario
+     * @param otp código a enviar
+     */
+    void sendRegistrationOTPEmail(String email, String otp);
+
     // ------------------ LOGIN CON 2FA ------------------
 
     /**

@@ -1,24 +1,20 @@
 package co.edu.uniquindio.FitZone.dto.request;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-
-import java.math.BigDecimal;
+import lombok.Data;
 
 /**
- * DTO para la solicitud de creación de un Payment Intent.
- * @param amount Cantidad a cobrar.
- * @param currency Divisa (Moneda) en la que se realizará el cobro.
- * @param description Descripción del pago.
+ * DTO para la solicitud de creación de un Payment Intent con Stripe.
  */
-public record PaymentIntentRequest(
+@Data
+public class PaymentIntentRequest {
 
-        @NotNull(message = "El monto no puede ser nulo")
-        BigDecimal amount,
+    @NotNull(message = "El ID de la membresía no puede ser nulo")
+    private Long membershipId;
 
-        @NotBlank(message = "La divisa no puede estar vacía")
-        String currency,
+    private String paymentMethodId; // Opcional: método de pago específico
 
-        String description
-) {
+    private String customerEmail; // Email del cliente
+
+    private Boolean savePaymentMethod = false; // Para guardar el método de pago
 }

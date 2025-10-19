@@ -6,9 +6,10 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import lombok.Getter;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.time.LocalDate;
 
@@ -17,9 +18,10 @@ import java.time.LocalDate;
  * Clase que sera embebida en la entidad User.
  * Es la encargada de contener toda la información personal
  */
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Embeddable
 public class PersonalInformation {
 
@@ -46,6 +48,14 @@ public class PersonalInformation {
     private String medicalConditions;
 
     @Column(name = "emergency_contact_name", nullable = false, length = 20)
-    private String emergencyContactPhone;
+    private String emergencyContactName;
 
+    // Método de compatibilidad para el código existente
+    public void setEmergencyContactPhone(String emergencyContactPhone) {
+        this.emergencyContactName = emergencyContactPhone;
+    }
+
+    public String getEmergencyContactPhone() {
+        return this.emergencyContactName;
+    }
 }

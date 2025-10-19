@@ -49,8 +49,13 @@ public interface IMembershipTypeService {
     /**
      * Obtiene una lista de todos los tipos de membresía en el sistema.
      * Este método devuelve una lista de objetos MembershipTypeResponse que representan a todos los tipos de membresía.
-     * @return List<MembershipTypeResponse> lista de tipos de membresía
+     * @return List<MembershipTypeResponse> lista de todos los tipos de membresía
+     */
+    List<MembershipTypeResponse> getAllMembershipTypes();
+
+    /**
+     * Obtiene una lista de todos los tipos de membresía en el sistema (método alternativo).
+     * @return List<MembershipTypeResponse> lista de todos los tipos de membresía
      */
     List<MembershipTypeResponse> getMembershipTypes();
-
 }

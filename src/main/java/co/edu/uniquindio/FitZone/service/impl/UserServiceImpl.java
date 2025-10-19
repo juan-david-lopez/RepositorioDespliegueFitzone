@@ -3,14 +3,21 @@ package co.edu.uniquindio.FitZone.service.impl;
 import co.edu.uniquindio.FitZone.dto.request.LoginRequest;
 import co.edu.uniquindio.FitZone.dto.request.UserRequest;
 import co.edu.uniquindio.FitZone.dto.request.UserUpdateRequest;
+import co.edu.uniquindio.FitZone.dto.response.MembershipResponse;
 import co.edu.uniquindio.FitZone.dto.response.UserResponse;
+import co.edu.uniquindio.FitZone.exception.LocationNotFoundException;
 import co.edu.uniquindio.FitZone.exception.ResourceAlreadyExistsException;
 import co.edu.uniquindio.FitZone.exception.UnauthorizedRegistrationException;
 import co.edu.uniquindio.FitZone.exception.UserNotFoundException;
+import co.edu.uniquindio.FitZone.model.entity.Location;
+import co.edu.uniquindio.FitZone.model.entity.Membership;
 import co.edu.uniquindio.FitZone.model.entity.PersonalInformation;
 import co.edu.uniquindio.FitZone.model.entity.User;
+import co.edu.uniquindio.FitZone.model.enums.MembershipStatus;
 import co.edu.uniquindio.FitZone.model.enums.UserRole;
+import co.edu.uniquindio.FitZone.repository.LocationRepository;
 import co.edu.uniquindio.FitZone.repository.UserRepository;
+import co.edu.uniquindio.FitZone.service.interfaces.IMembershipService;
 import co.edu.uniquindio.FitZone.service.interfaces.IUserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,10 +38,15 @@ public class UserServiceImpl implements IUserService{
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final LocationRepository locationRepository;
+    private final IMembershipService membershipService; // ✅ AGREGADO
 
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder,
+                          LocationRepository locationRepository, IMembershipService membershipService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.locationRepository = locationRepository;
+        this.membershipService = membershipService; // ✅ AGREGADO
     }
 
 
@@ -47,7 +59,7 @@ public class UserServiceImpl implements IUserService{
     @Override
     public UserResponse registerUser(UserRequest request) {
         logger.info("Iniciando registro de usuario por administrador - Email: {}, Rol: {}",
-            request.email(), request.role());
+                request.email(), request.role());
 
         //Obtener el rol del usuario autenticado que está realizando la solicitud
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -65,7 +77,7 @@ public class UserServiceImpl implements IUserService{
         //Los demás roles solo pueden registrar roles con un nivel de jerarquía inferior
         if (registeringUserRole != UserRole.ADMIN && registeringUserRole.getHierarchyLevel() <= request.role().getHierarchyLevel()) {
             logger.warn("Intento de registro no autorizado - Rol registrador: {}, Rol solicitado: {}",
-                registeringUserRole, request.role());
+                    registeringUserRole, request.role());
             throw new UnauthorizedRegistrationException("El usuario con rol " + registeringUserRole.name() + " no está autorizado para registrar un usuario con rol " + request.role().name());
         }
 
@@ -77,7 +89,7 @@ public class UserServiceImpl implements IUserService{
             throw  new ResourceAlreadyExistsException("El email ya se encuentra registrado.");
         }
 
-        if(userRepository.existsByPersonalInformation_DocumentNumber(request.documentNumber())){
+        if(userRepository.existsByDocumentNumber(request.documentNumber())){
             logger.warn("Intento de registro con número de documento duplicado: {}", request.documentNumber());
             throw new ResourceAlreadyExistsException("El número de documento ya se encuentra registrado.");
         }
@@ -95,9 +107,10 @@ public class UserServiceImpl implements IUserService{
         user.setPersonalInformation(personalInformation);
 
         //Guardamos el usuario en la base de datos
+        user = userRepository.save(user);
         UserResponse response = getUserResponse(user);
         logger.info("Usuario registrado exitosamente por administrador - ID: {}, Email: {}, Rol: {}",
-            response.idUser(), response.email(), response.role());
+                response.idUser(), response.email(), response.role());
         return response;
     }
 
@@ -110,7 +123,7 @@ public class UserServiceImpl implements IUserService{
             throw new ResourceAlreadyExistsException("El email ya se encuentra registrado.");
         }
 
-        if(userRepository.existsByPersonalInformation_DocumentNumber(request.documentNumber())){
+        if(userRepository.existsByDocumentNumber(request.documentNumber())){
             throw new ResourceAlreadyExistsException("El número de documento ya se encuentra registrado.");
         }
 
@@ -122,13 +135,33 @@ public class UserServiceImpl implements IUserService{
         PersonalInformation personalInformation = getPersonalInformation(request);
         user.setPersonalInformation(personalInformation);
 
-        // 🔥 Guardar primero
+        // 🔥 ASIGNAR UBICACIÓN PRINCIPAL si se proporciona durante el registro
+        if (request.mainLocationId() != null) {
+            Location mainLocation = locationRepository.findById(request.mainLocationId())
+                    .orElseThrow(() -> {
+                        logger.error("Ubicación no encontrada con ID: {}", request.mainLocationId());
+                        return new LocationNotFoundException("La ubicación seleccionada no existe");
+                    });
+            // Pasar el objeto Location completo, el setter extrae el ID internamente
+            user.setMainLocation(mainLocation);
+            logger.info("Ubicación principal asignada al usuario - Location ID: {}, Nombre: {}",
+                    mainLocation.getIdLocation(), mainLocation.getName());
+        } else {
+            logger.warn("Usuario registrado sin ubicación principal - Email: {}", request.email());
+        }
+
+        // 🔥 Guardar usuario con ubicación asignada
         User savedUser = userRepository.save(user);
 
         // 🚀 Retornar la respuesta con los datos persistidos
         UserResponse response = getUserResponse(savedUser);
-        logger.info("Usuario registrado exitosamente de forma pública - ID: {}, Email: {}, Rol: {}",
-                response.idUser(), response.email(), response.role());
+
+        String locationInfo = savedUser.getMainLocation() != null
+            ? "ID: " + savedUser.getMainLocation()
+            : "No asignada";
+
+        logger.info("Usuario registrado exitosamente de forma pública - ID: {}, Email: {}, Rol: {}, MainLocation: {}",
+                response.idUser(), response.email(), response.role(), locationInfo);
 
         return response;
     }
@@ -141,7 +174,7 @@ public class UserServiceImpl implements IUserService{
      */
     private static PersonalInformation getPersonalInformation(UserRequest request) {
         logger.debug("Mapeando información personal del usuario - Nombre: {}, Apellido: {}",
-            request.firstName(), request.lastName());
+                request.firstName(), request.lastName());
 
         PersonalInformation personalInformation = new PersonalInformation();
         personalInformation.setFirstName(request.firstName());
@@ -150,7 +183,7 @@ public class UserServiceImpl implements IUserService{
         personalInformation.setDocumentNumber(request.documentNumber());
         personalInformation.setBirthDate(request.birthDate());
         personalInformation.setMedicalConditions(request.medicalConditions());
-        personalInformation.setEmergencyContactPhone(request.emergencyContactPhone());
+        personalInformation.setEmergencyContactName(request.emergencyContactPhone());
         personalInformation.setPhoneNumber(request.phoneNumber());
 
         logger.debug("Información personal mapeada exitosamente");
@@ -167,7 +200,7 @@ public class UserServiceImpl implements IUserService{
     public UserResponse updateUser(Long idUser, UserUpdateRequest request) {
         logger.info("Iniciando actualización de usuario - ID: {}", idUser);
         logger.debug("Campos a actualizar - Nombre: {}, Apellido: {}, Email: {}, Documento: {}",
-            request.firstName(), request.lastName(), request.email(), request.documentNumber());
+                request.firstName(), request.lastName(), request.email(), request.documentNumber());
 
         // Buscar el usuario por su ID. Si no existe, lanzar una excepción.
         User existingUser = userRepository.findById(idUser)
@@ -177,7 +210,7 @@ public class UserServiceImpl implements IUserService{
                 });
 
         logger.debug("Usuario encontrado para actualización: {} (ID: {})",
-            existingUser.getPersonalInformation().getFirstName(), idUser);
+                existingUser.getPersonalInformation().getFirstName(), idUser);
 
         // Actualizar solo los campos que no son nulos en la solicitud
         if(request.firstName() != null) {
@@ -197,7 +230,7 @@ public class UserServiceImpl implements IUserService{
             logger.debug("Email actualizado: {}", request.email());
         }
         if(request.documentNumber() != null && !existingUser.getPersonalInformation().getDocumentNumber().equals(request.documentNumber())) {
-            if(userRepository.existsByPersonalInformation_DocumentNumber(request.documentNumber())){
+            if(userRepository.existsByDocumentNumber(request.documentNumber())){
                 logger.warn("Intento de actualización con número de documento duplicado: {}", request.documentNumber());
                 throw new ResourceAlreadyExistsException("El nuevo número de documento ya se encuentra registrado por otro usuario.");
             }
@@ -217,7 +250,7 @@ public class UserServiceImpl implements IUserService{
             logger.debug("Fecha de nacimiento actualizada: {}", request.birthDate());
         }
         if(request.emergencyContactPhone() != null) {
-            existingUser.getPersonalInformation().setEmergencyContactPhone(request.emergencyContactPhone());
+            existingUser.getPersonalInformation().setEmergencyContactName(request.emergencyContactPhone());
             logger.debug("Teléfono de contacto de emergencia actualizado: {}", request.emergencyContactPhone());
         }
         if(request.medicalConditions() != null) {
@@ -236,18 +269,8 @@ public class UserServiceImpl implements IUserService{
         User updatedUser = userRepository.save(existingUser);
         logger.debug("Usuario guardado exitosamente con ID: {}", updatedUser.getIdUser());
 
-        // Construir el nombre completo
-        String fullName = updatedUser.getPersonalInformation().getFirstName();
-        if (updatedUser.getPersonalInformation().getLastName() != null) {
-            fullName += " " + updatedUser.getPersonalInformation().getLastName();
-        }
-
-        return new UserResponse(
-                updatedUser.getIdUser(),
-                fullName.trim(),
-                updatedUser.getEmail(),
-                updatedUser.getRole().name()
-        );
+        // ✅ CORREGIDO: Usar el método fromUser en lugar del constructor directo
+        return UserResponse.fromUser(updatedUser, null);
     }
 
     /**
@@ -267,7 +290,7 @@ public class UserServiceImpl implements IUserService{
         personalInfo.setBirthDate(request.birthDate());
         personalInfo.setPhoneNumber(request.phoneNumber());
         personalInfo.setMedicalConditions(request.medicalConditions());
-        personalInfo.setEmergencyContactPhone(request.emergencyContactPhone());
+        personalInfo.setEmergencyContactName(request.emergencyContactPhone());
 
         logger.debug("Información personal del usuario existente actualizada exitosamente");
         return personalInfo;
@@ -288,7 +311,7 @@ public class UserServiceImpl implements IUserService{
                 });
 
         logger.debug("Usuario encontrado para eliminación: {} (ID: {})",
-            user.getPersonalInformation().getFirstName(), idUser);
+                user.getPersonalInformation().getFirstName(), idUser);
 
         user.setActive(false);
         userRepository.save(user);
@@ -311,20 +334,40 @@ public class UserServiceImpl implements IUserService{
                 });
 
         logger.debug("Usuario encontrado por ID: {} (ID: {})",
-            user.getPersonalInformation().getFirstName(), idUser);
+                user.getPersonalInformation().getFirstName(), idUser);
 
-        // Construir el nombre completo
-        String fullName = user.getPersonalInformation().getFirstName();
-        if (user.getPersonalInformation().getLastName() != null) {
-            fullName += " " + user.getPersonalInformation().getLastName();
+        // ✅ MEJORADO: Primero intentar usar el campo directo membershipType
+        String membershipType = null;
+
+        // Opción 1: Usar el campo directo si está disponible
+        if (user.getMembershipType() != null) {
+            membershipType = user.getMembershipType().name();
+            logger.info("✅ [getUserById] MembershipType obtenido del campo directo: {}", membershipType);
+        } else {
+            // Opción 2: Si no está disponible, consultar desde el servicio de membresía
+            try {
+                logger.debug("🔍 [getUserById] Campo membershipType null, consultando desde servicio de membresía");
+                MembershipResponse membership = membershipService.getMembershipByUserId(idUser);
+
+                if (membership != null && MembershipStatus.ACTIVE.equals(membership.status())) {
+                    membershipType = membership.membershipTypeName().name();
+                    logger.info("✅ [getUserById] Usuario {} tiene membresía activa: {}", idUser, membershipType);
+                }
+            } catch (Exception e) {
+                // Usuario no tiene membresía activa
+                logger.info("ℹ️ [getUserById] Usuario {} no tiene membresía activa: {}", idUser, e.getMessage());
+                membershipType = null;
+            }
         }
 
-        return new UserResponse(
-                user.getIdUser(),
-                fullName.trim(),
-                user.getEmail(),
-                user.getRole().name()
-        );
+        // ✅ USAR EL MÉTODO fromUser QUE INCLUYE MEMBERSHIPTYPE
+        UserResponse response = UserResponse.fromUser(user, membershipType);
+
+        // ✅ Log final del objeto que se va a devolver
+        logger.info("📦 [getUserById] Respuesta generada - idUser: {}, id: {}, membershipType: {}, email: {}",
+                response.idUser(), response.id(), response.membershipType(), response.email());
+
+        return response;
     }
 
     /**
@@ -338,21 +381,9 @@ public class UserServiceImpl implements IUserService{
         List<User> users = userRepository.findByIsActiveTrue();
         logger.debug("Se encontraron {} usuarios activos", users.size());
 
+        // ✅ CORREGIDO: Usar fromUser en lugar del constructor directo
         return users.stream()
-                .map(user -> {
-                    // Construir el nombre completo
-                    String fullName = user.getPersonalInformation().getFirstName();
-                    if (user.getPersonalInformation().getLastName() != null) {
-                        fullName += " " + user.getPersonalInformation().getLastName();
-                    }
-                    
-                    return new UserResponse(
-                            user.getIdUser(),
-                            fullName.trim(),
-                            user.getEmail(),
-                            user.getRole().name()
-                    );
-                })
+                .map(user -> UserResponse.fromUser(user, null))
                 .toList();
     }
 
@@ -372,20 +403,10 @@ public class UserServiceImpl implements IUserService{
                 });
 
         logger.debug("Usuario encontrado por email: {} (ID: {})",
-            user.getPersonalInformation().getFirstName(), user.getIdUser());
+                user.getPersonalInformation().getFirstName(), user.getIdUser());
 
-        // Construir el nombre completo
-        String fullName = user.getPersonalInformation().getFirstName();
-        if (user.getPersonalInformation().getLastName() != null) {
-            fullName += " " + user.getPersonalInformation().getLastName();
-        }
-
-        return new UserResponse(
-                user.getIdUser(),
-                fullName.trim(),
-                user.getEmail(),
-                user.getRole().name()
-        );
+        // ✅ CORREGIDO: Usar fromUser en lugar del constructor directo
+        return UserResponse.fromUser(user, null);
     }
 
     /**
@@ -397,32 +418,52 @@ public class UserServiceImpl implements IUserService{
     public UserResponse getUserByDocumentNumber(String documentNumber) {
         logger.debug("Consultando usuario por número de documento: {}", documentNumber);
 
-        User user = userRepository.findByPersonalInformation_DocumentNumber(documentNumber)
+        User user = userRepository.findByDocumentNumber(documentNumber)
                 .orElseThrow( () -> {
                     logger.error("Usuario no encontrado con número de documento: {}", documentNumber);
                     return new UserNotFoundException("El número de documento ingresado no existe");
                 });
 
         logger.debug("Usuario encontrado por documento: {} (ID: {})",
-            user.getPersonalInformation().getFirstName(), user.getIdUser());
+                user.getPersonalInformation().getFirstName(), user.getIdUser());
 
-        // Construir el nombre completo
-        String fullName = user.getPersonalInformation().getFirstName();
-        if (user.getPersonalInformation().getLastName() != null) {
-            fullName += " " + user.getPersonalInformation().getLastName();
-        }
-
-        return new UserResponse(
-                user.getIdUser(),
-                fullName.trim(),
-                user.getEmail(),
-                user.getRole().name()
-        );
+        // ✅ CORREGIDO: Usar fromUser en lugar del constructor directo
+        return UserResponse.fromUser(user, null);
     }
 
     @Override
     public boolean validateCredentials(LoginRequest request) {
-        return false;
+        try {
+            // Buscar el usuario por email
+            User user = userRepository.findByEmail(request.email())
+                    .orElse(null);
+
+            if (user == null) {
+                logger.warn("Usuario no encontrado: {}", request.email());
+                return false;
+            }
+
+            // Verificar si el usuario está activo
+            if (!user.isActive()) {
+                logger.warn("Usuario inactivo: {}", request.email());
+                return false;
+            }
+
+            // Comparar la contraseña usando el passwordEncoder
+            boolean passwordMatches = passwordEncoder.matches(request.password(), user.getPassword());
+
+            if (passwordMatches) {
+                logger.info("Credenciales válidas para usuario: {}", request.email());
+            } else {
+                logger.warn("Contraseña incorrecta para usuario: {}", request.email());
+            }
+
+            return passwordMatches;
+
+        } catch (Exception e) {
+            logger.error("Error validando credenciales para usuario {}: {}", request.email(), e.getMessage());
+            return false;
+        }
     }
 
     @Override

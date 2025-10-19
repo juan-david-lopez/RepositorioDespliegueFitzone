@@ -7,6 +7,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -32,12 +33,18 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
+                .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(authorize -> authorize
-                        // ✅ PERMITIR TODOS LOS ENDPOINTS DE AUTH (INCLUYENDO login-2fa)
+                        //  PERMITIR TODOS LOS ENDPOINTS DE AUTH (INCLUYENDO login-2fa)
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/users/public/register").permitAll()
+                        //  PERMITIR ACCESO PÚBLICO A TIPOS DE MEMBRESÍA
+                        .requestMatchers(HttpMethod.GET, "/membership-types/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/membership-types").permitAll()
+                        //  PERMITIR ACCESO PÚBLICO A FRANQUICIAS Y UBICACIONES
+                        .requestMatchers(HttpMethod.GET, "/franchises/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/locations/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
@@ -53,14 +60,14 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:3000",
+                "http://localhost:3001",
                 "https://frontend-fitzone-oaoh.vercel.app",
-                "https://frontend-fitzone-oaoh-git-feat-mem-ed8561-juan-lopez-s-projects.vercel.app",
                 "https://frontend-fitzone-oaoh-git-feat-mem-ed8561-juan-lopez-s-projects.vercel.app"
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept"));
         configuration.setAllowCredentials(true);
-        configuration.setExposedHeaders(Arrays.asList("Authorization")); // ✅ Para que el frontend pueda leer headers
+        configuration.setExposedHeaders(List.of("Authorization")); // ✅ Para que el frontend pueda leer headers
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

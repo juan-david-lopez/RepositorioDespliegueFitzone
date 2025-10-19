@@ -24,7 +24,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @param documentNumber El número de documento a verificar.
      * @return true si el usuario existe, false en caso contrario.
      */
-    boolean existsByPersonalInformation_DocumentNumber(String documentNumber);
+    boolean existsByDocumentNumber(String documentNumber);
 
     /**
      * Busca un usuario por su dirección de correo electrónico.
@@ -38,7 +38,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @param documentNumber El número de documento del usuario.
      * @return Un objeto Optional que contiene el usuario si se encuentra.
      */
-    Optional<User> findByPersonalInformation_DocumentNumber(String documentNumber);
+    Optional<User> findByDocumentNumber(String documentNumber);
 
     /**
      * Busca una lista de usuarios que estén activos.
