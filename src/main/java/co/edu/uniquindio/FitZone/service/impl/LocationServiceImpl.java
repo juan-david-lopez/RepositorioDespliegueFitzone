@@ -145,7 +145,7 @@ public class LocationServiceImpl implements ILocationService {
                 });
 
         logger.debug("Sede encontrada para eliminación: {} (ID: {})", location.getName(), idLocation);
-        location.setActive(false);
+        location.setIsActive(false);
 
         logger.debug("Desactivando sede y guardando cambios");
         locationRepository.save(location);
