@@ -135,7 +135,7 @@ class ReservationIntegrationTest {
         admin.setEmail("admin@fitzone.com");
         admin.setPassword(passwordEncoder.encode("admin123"));
         admin.setRole(UserRole.ADMIN);
-        admin.setIsActive(true);
+        admin.setActive(true);
 
         PersonalInformation adminInfo = new PersonalInformation();
         adminInfo.setFirstName("Admin");
@@ -163,7 +163,7 @@ class ReservationIntegrationTest {
         eliteUser.setEmail("elite@fitzone.com");
         eliteUser.setPassword(passwordEncoder.encode("elite123"));
         eliteUser.setRole(UserRole.MEMBER);
-        eliteUser.setIsActive(true);
+        eliteUser.setActive(true);
 
         PersonalInformation eliteInfo = new PersonalInformation();
         eliteInfo.setFirstName("Juan");
@@ -188,7 +188,7 @@ class ReservationIntegrationTest {
         premiumUser.setEmail("premium@fitzone.com");
         premiumUser.setPassword(passwordEncoder.encode("premium123"));
         premiumUser.setRole(UserRole.MEMBER);
-        premiumUser.setIsActive(true);
+        premiumUser.setActive(true);
 
         PersonalInformation premiumInfo = new PersonalInformation();
         premiumInfo.setFirstName("Maria");
