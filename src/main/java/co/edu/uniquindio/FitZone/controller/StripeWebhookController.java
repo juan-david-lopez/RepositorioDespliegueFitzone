@@ -30,7 +30,7 @@ import org.springframework.web.bind.annotation.*;
  * El pago se procesa directamente en MembershipController.processPaymentAndCreateMembership()
  */
 @RestController
-@RequestMapping("/api/v1/webhooks")
+@RequestMapping("/v1/webhooks")
 @RequiredArgsConstructor
 @Slf4j
 @ConditionalOnProperty(name = "stripe.webhook.enabled", havingValue = "true", matchIfMissing = false)

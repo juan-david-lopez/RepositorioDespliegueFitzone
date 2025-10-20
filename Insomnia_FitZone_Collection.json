@@ -1,0 +1,216 @@
+    {
+      "_id": "req_join_group_class_elite",
+      "parentId": "fld_reservations",
+      "modified": 1705708800000,
+      "created": 1705708800000,
+      "url": "{{ _.base_url }}/api/reservations/group-class/1/join",
+      "name": "Unirse a Clase (ELITE - Gratis)",
+      "description": "Usuarios ELITE se unen gratis a clases grupales",
+      "method": "POST",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1705708600000,
+      "_type": "request"
+    },
+    {
+      "_id": "req_join_group_class_premium",
+      "parentId": "fld_reservations",
+      "modified": 1705708800000,
+      "created": 1705708800000,
+      "url": "{{ _.base_url }}/api/reservations/group-class/1/join",
+      "name": "Unirse a Clase (PREMIUM/BASIC - $15,000)",
+      "description": "Usuarios PREMIUM/BASIC deben pagar $15,000 COP",
+      "method": "POST",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1705708500000,
+      "_type": "request"
+    },
+    {
+      "_id": "req_my_reservations",
+      "parentId": "fld_reservations",
+      "modified": 1705708800000,
+      "created": 1705708800000,
+      "url": "{{ _.base_url }}/api/reservations/upcoming",
+      "name": "Mis Reservas Próximas",
+      "description": "Ver las reservas del usuario autenticado",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1705708400000,
+      "_type": "request"
+    },
+    {
+      "_id": "req_create_payment_intent",
+      "parentId": "fld_payments",
+      "modified": 1705708800000,
+      "created": 1705708800000,
+      "url": "{{ _.base_url }}/api/payments/create-payment-intent",
+      "name": "Crear Payment Intent (Stripe)",
+      "description": "Crear intención de pago para clase grupal",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"reservationId\": 1,\n  \"amount\": 15000,\n  \"currency\": \"cop\",\n  \"description\": \"Pago por clase grupal: Yoga Matutino\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1705708800000,
+      "_type": "request"
+    },
+    {
+      "_id": "fld_payments",
+      "parentId": "wrk_fitzone",
+      "modified": 1705708800000,
+      "created": 1705708800000,
+      "name": "3️⃣ Pagos (Stripe)",
+      "description": "",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1705708500000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_confirm_payment",
+      "parentId": "fld_payments",
+      "modified": 1705708800000,
+      "created": 1705708800000,
+      "url": "{{ _.base_url }}/api/payments/confirm",
+      "name": "Confirmar Pago",
+      "description": "Confirmar pago después de procesar con Stripe",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"reservationId\": 1,\n  \"paymentIntentId\": \"pi_xxxxxxxxxxxxx\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1705708700000,
+      "_type": "request"
+    },
+    {
+      "_id": "req_get_membership_types",
+      "parentId": "fld_memberships",
+      "modified": 1705708800000,
+      "created": 1705708800000,
+      "url": "{{ _.base_url }}/api/membership-types",
+      "name": "Listar Tipos de Membresía",
+      "description": "Obtener todos los tipos de membresía disponibles",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1705708800000,
+      "_type": "request"
+    },
+    {
+      "_id": "fld_memberships",
+      "parentId": "wrk_fitzone",
+      "modified": 1705708800000,
+      "created": 1705708800000,
+      "name": "4️⃣ Membresías",
+      "description": "",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1705708400000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_get_my_membership",
+      "parentId": "fld_memberships",
+      "modified": 1705708800000,
+      "created": 1705708800000,
+      "url": "{{ _.base_url }}/api/memberships/my-membership",
+      "name": "Mi Membresía Actual",
+      "description": "Ver detalles de la membresía del usuario",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1705708700000,
+      "_type": "request"
+    },
+    {
+      "_id": "req_activate_membership",
+      "parentId": "fld_memberships",
+      "modified": 1705708800000,
+      "created": 1705708800000,
+      "url": "{{ _.base_url }}/api/memberships/activate",
+      "name": "Activar Membresía",
+      "description": "Activar una membresía después del pago",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"membershipTypeId\": 1,\n  \"userId\": 1,\n  \"paymentIntentId\": \"pi_xxxxxxxxxxxxx\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1705708600000,
+      "_type": "request"
+    }
+  ]
+}
+

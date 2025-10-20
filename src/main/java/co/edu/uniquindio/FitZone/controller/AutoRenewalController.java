@@ -11,8 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/users/{userId}/membership")
-@PreAuthorize("hasAnyAuthority('ADMIN', 'USER')")
+@RequestMapping("/v1/users/{userId}/membership")
 public class AutoRenewalController {
 
     private static final Logger logger = LoggerFactory.getLogger(AutoRenewalController.class);
@@ -61,4 +60,3 @@ public class AutoRenewalController {
         }
     }
 }
-

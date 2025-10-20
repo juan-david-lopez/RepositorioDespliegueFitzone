@@ -36,15 +36,17 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(authorize -> authorize
-                        //  PERMITIR TODOS LOS ENDPOINTS DE AUTH (INCLUYENDO login-2fa)
+                        // ✅ PERMITIR TODOS LOS ENDPOINTS DE AUTH (sin /api porque ya es global)
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/users/public/register").permitAll()
-                        //  PERMITIR ACCESO PÚBLICO A TIPOS DE MEMBRESÍA
+                        // ✅ PERMITIR ACCESO PÚBLICO A TIPOS DE MEMBRESÍA
                         .requestMatchers(HttpMethod.GET, "/membership-types/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/membership-types").permitAll()
-                        //  PERMITIR ACCESO PÚBLICO A FRANQUICIAS Y UBICACIONES
+                        // ✅ PERMITIR ACCESO PÚBLICO A FRANQUICIAS Y UBICACIONES
                         .requestMatchers(HttpMethod.GET, "/franchises/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/locations/**").permitAll()
+                        // ✅ PERMITIR HEALTH CHECK
+                        .requestMatchers("/actuator/health").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

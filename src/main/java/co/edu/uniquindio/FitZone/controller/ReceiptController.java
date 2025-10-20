@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/receipts")
+@RequestMapping("/v1/receipts")
 @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER', 'USER')")
 public class ReceiptController {
 

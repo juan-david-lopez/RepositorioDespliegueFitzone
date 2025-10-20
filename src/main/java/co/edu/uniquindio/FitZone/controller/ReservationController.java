@@ -25,7 +25,7 @@ import java.util.Map;
  * Controlador REST para gestionar las reservaciones de los usuarios.
  */
 @RestController
-@RequestMapping("/api/reservations")
+@RequestMapping("/reservations")
 public class ReservationController {
 
     private static final Logger logger = LoggerFactory.getLogger(ReservationController.class);

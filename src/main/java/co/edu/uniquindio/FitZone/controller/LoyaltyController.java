@@ -20,7 +20,7 @@ import java.util.Map;
  * Controlador REST para el sistema de fidelización y canje de beneficios.
  */
 @RestController
-@RequestMapping("/api/loyalty")
+@RequestMapping("/loyalty")
 @CrossOrigin(origins = "*")
 public class LoyaltyController {
 
@@ -371,4 +371,3 @@ public class LoyaltyController {
         }
     }
 }
-

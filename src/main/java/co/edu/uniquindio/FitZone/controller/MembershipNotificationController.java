@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/v1")
 @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER', 'USER')")
 public class MembershipNotificationController {
 

@@ -15,10 +15,10 @@ import org.springframework.web.bind.annotation.*;
  * Controlador REST para gestionar pagos con Stripe.
  */
 @RestController
-@RequestMapping("/api/v1/payments")
+@RequestMapping("/v1/payments")
+@CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "*")
 public class PaymentController {
 
     private final IStripePaymentService stripePaymentService;

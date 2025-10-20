@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
  * Controlador para gestionar instructores (usuarios con rol INSTRUCTOR).
  */
 @RestController
-@RequestMapping("/api/instructors")
+@RequestMapping("/instructors")
 public class InstructorController {
 
     private static final Logger logger = LoggerFactory.getLogger(InstructorController.class);
