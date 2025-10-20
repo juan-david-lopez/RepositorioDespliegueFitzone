@@ -110,6 +110,12 @@
             <artifactId>sendgrid-java</artifactId>
             <version>4.9.3</version>
         </dependency>
+        <!-- Spring DotEnv - Para cargar variables desde archivo .env -->
+        <dependency>
+            <groupId>me.paulschwarz</groupId>
+            <artifactId>spring-dotenv</artifactId>
+            <version>4.0.0</version>
+        </dependency>
         <!-- Jakarta Annotations API for @PostConstruct -->
         <dependency>
             <groupId>jakarta.annotation</groupId>

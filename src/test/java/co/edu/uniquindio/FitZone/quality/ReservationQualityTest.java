@@ -7,6 +7,7 @@ import co.edu.uniquindio.FitZone.model.entity.MembershipType;
 import co.edu.uniquindio.FitZone.model.entity.PersonalInformation;
 import co.edu.uniquindio.FitZone.model.entity.Reservation;
 import co.edu.uniquindio.FitZone.model.entity.base.UserBase;
+import co.edu.uniquindio.FitZone.model.enums.DocumentType;
 import co.edu.uniquindio.FitZone.model.enums.MembershipTypeName;
 import co.edu.uniquindio.FitZone.model.enums.UserRole;
 import co.edu.uniquindio.FitZone.repository.MembershipRepository;
@@ -26,7 +27,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -86,13 +86,21 @@ class ReservationQualityTest {
         eliteType = new MembershipType();
         eliteType.setName(MembershipTypeName.ELITE);
         eliteType.setDescription("Elite Membership");
-        eliteType.setPrice(70000.0);
+        eliteType.setMonthlyPrice(new java.math.BigDecimal("70000.0"));
+        eliteType.setAccessToAllLocation(true);
+        eliteType.setGroupClassesSessionsIncluded(-1); // Ilimitado
+        eliteType.setPersonalTrainingIncluded(10);
+        eliteType.setSpecializedClassesIncluded(true);
         eliteType = membershipTypeRepository.save(eliteType);
 
         premiumType = new MembershipType();
         premiumType.setName(MembershipTypeName.PREMIUM);
         premiumType.setDescription("Premium Membership");
-        premiumType.setPrice(50000.0);
+        premiumType.setMonthlyPrice(new java.math.BigDecimal("50000.0"));
+        premiumType.setAccessToAllLocation(true);
+        premiumType.setGroupClassesSessionsIncluded(8);
+        premiumType.setPersonalTrainingIncluded(4);
+        premiumType.setSpecializedClassesIncluded(true);
         premiumType = membershipTypeRepository.save(premiumType);
     }
 
@@ -102,7 +110,7 @@ class ReservationQualityTest {
         adminUser.setEmail("admin.quality@fitzone.com");
         adminUser.setPassword(passwordEncoder.encode("admin123"));
         adminUser.setRole(UserRole.ADMIN);
-        adminUser.setIsActive(true);
+        adminUser.setActive(true);
 
         PersonalInformation adminInfo = new PersonalInformation();
         adminInfo.setFirstName("Admin");
@@ -123,8 +131,8 @@ class ReservationQualityTest {
         eliteUser = new UserBase();
         eliteUser.setEmail("elite.quality@fitzone.com");
         eliteUser.setPassword(passwordEncoder.encode("elite123"));
-        eliteUser.setRole(UserRole.USER);
-        eliteUser.setIsActive(true);
+        eliteUser.setRole(UserRole.MEMBER);
+        eliteUser.setActive(true);
 
         PersonalInformation eliteInfo = new PersonalInformation();
         eliteInfo.setFirstName("Elite");
@@ -145,8 +153,8 @@ class ReservationQualityTest {
         premiumUser = new UserBase();
         premiumUser.setEmail("premium.quality@fitzone.com");
         premiumUser.setPassword(passwordEncoder.encode("premium123"));
-        premiumUser.setRole(UserRole.USER);
-        premiumUser.setIsActive(true);
+        premiumUser.setRole(UserRole.MEMBER);
+        premiumUser.setActive(true);
 
         PersonalInformation premiumInfo = new PersonalInformation();
         premiumInfo.setFirstName("Premium");
@@ -526,13 +534,15 @@ class ReservationQualityTest {
         UserBase user = new UserBase();
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode("test123"));
-        user.setRole(UserRole.USER);
-        user.setIsActive(true);
+        user.setRole(UserRole.MEMBER);
+        user.setActive(true);
 
         PersonalInformation info = new PersonalInformation();
         info.setFirstName("Test");
         info.setLastName("User");
         info.setPhoneNumber("3009999999");
+        info.setDocumentType(DocumentType.CC);
+        info.setDocumentNumber("9999" + System.currentTimeMillis() % 100000);
         user.setPersonalInformation(info);
 
         user = userRepository.save(user);
@@ -547,4 +557,3 @@ class ReservationQualityTest {
         return user;
     }
 }
-

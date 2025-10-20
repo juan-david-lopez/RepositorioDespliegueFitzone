@@ -101,19 +101,31 @@ class ReservationIntegrationTest {
         MembershipType elite = new MembershipType();
         elite.setName(MembershipTypeName.ELITE);
         elite.setDescription("Membresía Elite - Acceso ilimitado");
-        elite.setPrice(70000.0);
+        elite.setMonthlyPrice(new java.math.BigDecimal("70000.0"));
+        elite.setAccessToAllLocation(true);
+        elite.setGroupClassesSessionsIncluded(-1); // -1 = ilimitado
+        elite.setPersonalTrainingIncluded(10);
+        elite.setSpecializedClassesIncluded(true);
         membershipTypeRepository.save(elite);
 
         MembershipType premium = new MembershipType();
         premium.setName(MembershipTypeName.PREMIUM);
         premium.setDescription("Membresía Premium");
-        premium.setPrice(50000.0);
+        premium.setMonthlyPrice(new java.math.BigDecimal("50000.0"));
+        premium.setAccessToAllLocation(true);
+        premium.setGroupClassesSessionsIncluded(8);
+        premium.setPersonalTrainingIncluded(4);
+        premium.setSpecializedClassesIncluded(true);
         membershipTypeRepository.save(premium);
 
         MembershipType basic = new MembershipType();
         basic.setName(MembershipTypeName.BASIC);
         basic.setDescription("Membresía Básica");
-        basic.setPrice(30000.0);
+        basic.setMonthlyPrice(new java.math.BigDecimal("30000.0"));
+        basic.setAccessToAllLocation(false);
+        basic.setGroupClassesSessionsIncluded(4);
+        basic.setPersonalTrainingIncluded(0);
+        basic.setSpecializedClassesIncluded(false);
         membershipTypeRepository.save(basic);
     }
 
@@ -123,12 +135,14 @@ class ReservationIntegrationTest {
         admin.setEmail("admin@fitzone.com");
         admin.setPassword(passwordEncoder.encode("admin123"));
         admin.setRole(UserRole.ADMIN);
-        admin.setIsActive(true);
+        admin.setActive(true);
 
         PersonalInformation adminInfo = new PersonalInformation();
         adminInfo.setFirstName("Admin");
         adminInfo.setLastName("FitZone");
         adminInfo.setPhoneNumber("3001234567");
+        adminInfo.setDocumentType(DocumentType.CC);
+        adminInfo.setDocumentNumber("1000000000");
         admin.setPersonalInformation(adminInfo);
 
         admin = userRepository.save(admin);
@@ -148,13 +162,15 @@ class ReservationIntegrationTest {
         UserBase eliteUser = new UserBase();
         eliteUser.setEmail("elite@fitzone.com");
         eliteUser.setPassword(passwordEncoder.encode("elite123"));
-        eliteUser.setRole(UserRole.USER);
-        eliteUser.setIsActive(true);
+        eliteUser.setRole(UserRole.MEMBER);
+        eliteUser.setActive(true);
 
         PersonalInformation eliteInfo = new PersonalInformation();
         eliteInfo.setFirstName("Juan");
         eliteInfo.setLastName("Elite");
         eliteInfo.setPhoneNumber("3007654321");
+        eliteInfo.setDocumentType(DocumentType.CC);
+        eliteInfo.setDocumentNumber("1000000001");
         eliteUser.setPersonalInformation(eliteInfo);
 
         eliteUser = userRepository.save(eliteUser);
@@ -171,13 +187,15 @@ class ReservationIntegrationTest {
         UserBase premiumUser = new UserBase();
         premiumUser.setEmail("premium@fitzone.com");
         premiumUser.setPassword(passwordEncoder.encode("premium123"));
-        premiumUser.setRole(UserRole.USER);
-        premiumUser.setIsActive(true);
+        premiumUser.setRole(UserRole.MEMBER);
+        premiumUser.setActive(true);
 
         PersonalInformation premiumInfo = new PersonalInformation();
         premiumInfo.setFirstName("Maria");
         premiumInfo.setLastName("Premium");
         premiumInfo.setPhoneNumber("3009876543");
+        premiumInfo.setDocumentType(DocumentType.CC);
+        premiumInfo.setDocumentNumber("1000000002");
         premiumUser.setPersonalInformation(premiumInfo);
 
         premiumUser = userRepository.save(premiumUser);
@@ -462,4 +480,3 @@ class ReservationIntegrationTest {
         }
     }
 }
-
