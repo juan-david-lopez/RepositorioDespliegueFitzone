@@ -534,8 +534,8 @@ class ReservationQualityTest {
         UserBase user = new UserBase();
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode("test123"));
-        user.setRole(UserRole.MEMBER);
-        user.setActive(true);
+        user.setRole(UserRole.MEMBER);  // ✅ Cambiado de USER a MEMBER
+        user.setActive(true);  // ✅ Cambiado de setIsActive a setActive
 
         PersonalInformation info = new PersonalInformation();
         info.setFirstName("Test");

@@ -2,18 +2,55 @@ services:
   - type: web
     name: fitzone-backend
     env: docker
-    docker:
-      dockerfile: Dockerfile
+    region: oregon
+    plan: free
+    dockerfilePath: ./Dockerfile
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
+      - key: PORT
+        value: 10000
       - key: DATABASE_URL
         fromDatabase:
           name: fitzone-db
           property: connectionString
-    port: 10000
+      # Database credentials
+      - key: DB_URL
+        fromDatabase:
+          name: fitzone-db
+          property: connectionString
+      - key: DB_USERNAME
+        fromDatabase:
+          name: fitzone-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: fitzone-db
+          property: password
+      # JWT Configuration (agrega estos valores en el dashboard de Render)
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRATION
+        value: 3600
+      - key: JWT_REFRESH_EXPIRATION
+        value: 2592000
+      # SendGrid Configuration (agrega tu API key en el dashboard)
+      - key: SENDGRID_API_KEY
+        sync: false
+      - key: SENDGRID_FROM_EMAIL
+        sync: false
+      # Stripe Configuration (agrega tus keys en el dashboard)
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLIC_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        value: whsec_not_used
+    healthCheckPath: /actuator/health
 
 databases:
   - name: fitzone-db
     databaseName: fitzone
+    user: fitzone
     plan: free
+    region: oregon

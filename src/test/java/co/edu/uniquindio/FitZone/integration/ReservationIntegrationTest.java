@@ -5,6 +5,7 @@ import co.edu.uniquindio.FitZone.model.entity.MembershipType;
 import co.edu.uniquindio.FitZone.model.entity.PersonalInformation;
 import co.edu.uniquindio.FitZone.model.entity.Reservation;
 import co.edu.uniquindio.FitZone.model.entity.base.UserBase;
+import co.edu.uniquindio.FitZone.model.enums.DocumentType;
 import co.edu.uniquindio.FitZone.model.enums.MembershipTypeName;
 import co.edu.uniquindio.FitZone.model.enums.UserRole;
 import co.edu.uniquindio.FitZone.repository.MembershipRepository;
@@ -36,7 +37,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * 🔗 PRUEBAS DE INTEGRACIÓN - Sistema de Reservas
- *
  * Estas pruebas validan la integración completa entre controladores,
  * servicios, repositorios y base de datos.
  */
@@ -101,7 +101,7 @@ class ReservationIntegrationTest {
         MembershipType elite = new MembershipType();
         elite.setName(MembershipTypeName.ELITE);
         elite.setDescription("Membresía Elite - Acceso ilimitado");
-        elite.setMonthlyPrice(new java.math.BigDecimal("70000.0"));
+        elite.setMonthlyPrice(new java.math.BigDecimal("70000.0"));  // ✅ Cambiado de setPrice a setMonthlyPrice
         elite.setAccessToAllLocation(true);
         elite.setGroupClassesSessionsIncluded(-1); // -1 = ilimitado
         elite.setPersonalTrainingIncluded(10);
@@ -111,7 +111,7 @@ class ReservationIntegrationTest {
         MembershipType premium = new MembershipType();
         premium.setName(MembershipTypeName.PREMIUM);
         premium.setDescription("Membresía Premium");
-        premium.setMonthlyPrice(new java.math.BigDecimal("50000.0"));
+        premium.setMonthlyPrice(new java.math.BigDecimal("50000.0"));  // ✅ Cambiado de setPrice a setMonthlyPrice
         premium.setAccessToAllLocation(true);
         premium.setGroupClassesSessionsIncluded(8);
         premium.setPersonalTrainingIncluded(4);
@@ -121,7 +121,7 @@ class ReservationIntegrationTest {
         MembershipType basic = new MembershipType();
         basic.setName(MembershipTypeName.BASIC);
         basic.setDescription("Membresía Básica");
-        basic.setMonthlyPrice(new java.math.BigDecimal("30000.0"));
+        basic.setMonthlyPrice(new java.math.BigDecimal("30000.0"));  // ✅ Cambiado de setPrice a setMonthlyPrice
         basic.setAccessToAllLocation(false);
         basic.setGroupClassesSessionsIncluded(4);
         basic.setPersonalTrainingIncluded(0);
@@ -135,7 +135,7 @@ class ReservationIntegrationTest {
         admin.setEmail("admin@fitzone.com");
         admin.setPassword(passwordEncoder.encode("admin123"));
         admin.setRole(UserRole.ADMIN);
-        admin.setActive(true);
+        admin.setActive(true);  // ✅ Cambiado de setIsActive a setActive
 
         PersonalInformation adminInfo = new PersonalInformation();
         adminInfo.setFirstName("Admin");
@@ -162,8 +162,8 @@ class ReservationIntegrationTest {
         UserBase eliteUser = new UserBase();
         eliteUser.setEmail("elite@fitzone.com");
         eliteUser.setPassword(passwordEncoder.encode("elite123"));
-        eliteUser.setRole(UserRole.MEMBER);
-        eliteUser.setActive(true);
+        eliteUser.setRole(UserRole.MEMBER);  // ✅ Cambiado de USER a MEMBER
+        eliteUser.setActive(true);  // ✅ Cambiado de setIsActive a setActive
 
         PersonalInformation eliteInfo = new PersonalInformation();
         eliteInfo.setFirstName("Juan");
@@ -187,8 +187,8 @@ class ReservationIntegrationTest {
         UserBase premiumUser = new UserBase();
         premiumUser.setEmail("premium@fitzone.com");
         premiumUser.setPassword(passwordEncoder.encode("premium123"));
-        premiumUser.setRole(UserRole.MEMBER);
-        premiumUser.setActive(true);
+        premiumUser.setRole(UserRole.MEMBER);  // ✅ Cambiado de USER a MEMBER
+        premiumUser.setActive(true);  // ✅ Cambiado de setIsActive a setActive
 
         PersonalInformation premiumInfo = new PersonalInformation();
         premiumInfo.setFirstName("Maria");
