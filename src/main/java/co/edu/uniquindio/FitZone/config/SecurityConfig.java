@@ -61,17 +61,12 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:3000",
                 "http://localhost:3001",
-                "https://frontend-fitzone-oaoh.vercel.app",
-                "https://frontend-fitzone-oaoh-git-feat-mem-ed8561-juan-lopez-s-projects.vercel.app",
-                "https://front-proyecto-46dcg9gxe-juan-lopez-s-projects.vercel.app/",
-                "https://front-proyecto-psi.vercel.app/",
-                "https://front-proyecto-git-master-juan-lopez-s-projects.vercel.app/"
-                // ✅ NUEVO: Frontend principal en Vercel
+                "https://front-proyecto-psi.vercel.app"
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept"));
         configuration.setAllowCredentials(true);
-        configuration.setExposedHeaders(List.of("Authorization")); // ✅ Para que el frontend pueda leer headers
+        configuration.setExposedHeaders(List.of("Authorization"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
