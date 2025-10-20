@@ -29,47 +29,33 @@ pom.xml.releaseBackup
 pom.xml.versionsBackup
 pom.xml.next
 release.properties
-dependency-reduced-pom.xml
-buildNumber.properties
-.mvn/timing.properties
-.mvn/wrapper/maven-wrapper.jar
 
-# IntelliJ IDEA
+# IDE
 .idea/
-*.iws
+.vscode/
 *.iml
+*.iws
 *.ipr
+.classpath
+.project
+.settings/
 
-# Eclipse
-.metadata
-bin/
-tmp/
-*.tmp
-*.bak
-*.swp
-*~.nib
-local.properties
-
-# ========================================
-# ⚠️ ARCHIVOS SENSIBLES - NO SUBIR
-# ========================================
-
-# Variables de entorno
+# Environment variables
 .env
 .env.local
 .env.*.local
 
-# Archivos con credenciales
-application-local.properties
-secrets.properties
-
 # Logs
 logs/
 *.log
-*.log.*
-*.gz
 
-# Bases de datos locales
-*.db
-*.sqlite
-*.h2.db
+# OS
+.DS_Store
+Thumbs.db
+
+# Test
+coverage/
+.nyc_output/
+
+# Deployment instructions with secrets (use template instead)
+INSTRUCCIONES_DESPLIEGUE_FINAL.md
